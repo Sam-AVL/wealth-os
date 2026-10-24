@@ -1,0 +1,1460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="theme-color" content="#050806">
+<meta name="description" content="Your personal 10-year wealth planning dashboard. Works offline after installation.">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<title>Wealth OS · 10-Year Plan</title>
+<style>
+:root{
+  --bg:#050806; --card:#0d1410; --card2:#121c16; --line:#1d2b22;
+  --g:#22e06b; --g2:#0fb450; --gd:#0b3d1f; --txt:#eefaf2; --mut:#8aa396; --warn:#ffb020; --bad:#ff5d5d;
+  --mono: ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body{
+  background:
+   radial-gradient(600px 300px at 80% -50px,rgba(34,224,107,.16),transparent 70%),
+   linear-gradient(rgba(34,224,107,.035) 1px,transparent 1px) 0 0/28px 28px,
+   linear-gradient(90deg,rgba(34,224,107,.035) 1px,transparent 1px) 0 0/28px 28px,
+   var(--bg);
+  min-height:100vh;
+}
+.app{max-width:480px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
+header.top{display:flex;justify-content:space-between;align-items:center;padding:6px 2px 14px}
+.brand{font-weight:800;letter-spacing:.14em;font-size:13px;color:var(--g)}
+.brand span{color:var(--txt)}
+.pill{font:600 11px var(--mono);color:var(--g);border:1px solid var(--gd);background:rgba(34,224,107,.08);padding:5px 10px;border-radius:99px}
+h1{font-size:26px;margin:4px 2px 4px;letter-spacing:-.02em}
+h2{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:22px 2px 10px;font-weight:700}
+p.sub{color:var(--mut);font-size:14px;line-height:1.5;margin:0 2px 14px}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px;position:relative}
+.card.glow{border-color:rgba(34,224,107,.45);box-shadow:0 0 0 1px rgba(34,224,107,.1),0 10px 40px -10px rgba(34,224,107,.35)}
+.hero{background:linear-gradient(160deg,#0f7a38 0%,#12a84c 45%,#0b5a2a 100%);border-radius:24px;padding:18px;border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 50px -18px rgba(34,224,107,.6);overflow:hidden;position:relative}
+.hero .lbl{font-size:13px;opacity:.85;font-weight:600}
+.hero .big{font:800 38px var(--mono);letter-spacing:-.03em;margin:4px 0 2px}
+.hero canvas{width:100%;height:90px;display:block;margin-top:8px}
+.hero .row{display:flex;justify-content:space-between;font:600 12px var(--mono);opacity:.9}
+.bar{height:8px;background:rgba(255,255,255,.18);border-radius:9px;overflow:hidden;margin-top:10px}
+.bar>i{display:block;height:100%;background:#fff;border-radius:9px;width:0;transition:width .5s}
+.dark .bar{background:#16231b}.dark .bar>i{background:linear-gradient(90deg,var(--g2),var(--g))}
+label{display:block;font-size:12px;color:var(--mut);font-weight:600;margin:12px 0 6px}
+input[type=number],select,input[type=text]{width:100%;background:#08100b;border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:13px 14px;font:600 16px var(--mono);outline:none}
+input:focus,select:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(34,224,107,.15)}
+select{font-family:inherit;font-size:15px}
+input[type=range]{width:100%;accent-color:var(--g);height:28px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#08100b;border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat small{display:block;color:var(--mut);font-size:11px;font-weight:600;margin-bottom:4px}
+.stat b{font:700 18px var(--mono)}
+.stat b.g{color:var(--g)} .stat b.r{color:var(--bad)}
+.alloc{margin:14px 0}
+.alloc .hd{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:700}
+.alloc .hd span.v{font:700 14px var(--mono);color:var(--g)}
+.alloc small{color:var(--mut);font-size:12px}
+.note{font-size:12.5px;line-height:1.5;color:var(--mut);padding:10px 12px;border-left:2px solid var(--g);background:rgba(34,224,107,.05);border-radius:0 10px 10px 0;margin-top:10px}
+.note.warn{border-color:var(--warn);background:rgba(255,176,32,.06)}
+.note.bad{border-color:var(--bad);background:rgba(255,93,93,.07)}
+button{font:700 14px inherit;font-family:inherit;border:0;border-radius:12px;padding:13px 16px;cursor:pointer;color:#03140a;background:linear-gradient(180deg,var(--g),var(--g2));width:100%}
+button.ghost{background:transparent;color:var(--g);border:1px solid var(--gd)}
+button.sm{width:auto;padding:9px 14px;font-size:13px}
+.chk{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.4;cursor:pointer}
+.chk:last-child{border:0}
+.chk .bx{flex:0 0 22px;height:22px;border-radius:7px;border:2px solid #2b4033;display:grid;place-items:center;font-size:13px;color:transparent;margin-top:1px}
+.chk.on .bx{background:var(--g);border-color:var(--g);color:#03140a}
+.chk.on span{color:var(--mut);text-decoration:line-through}
+.chk b{display:block}
+.chk em{font-style:normal;color:var(--mut);font-size:12.5px}
+.chip{display:inline-block;font:600 11px var(--mono);padding:4px 9px;border-radius:99px;background:rgba(34,224,107,.1);color:var(--g);margin-right:6px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{width:auto;flex:0 0 auto;background:#0b130e;color:var(--mut);border:1px solid var(--line);padding:9px 14px;font-size:13px}
+.tabs button.on{background:rgba(34,224,107,.14);color:var(--g);border-color:var(--g)}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:rgba(5,8,6,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+nav .in{max-width:480px;margin:auto;display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+nav button{background:none;color:var(--mut);padding:7px 0 5px;font-size:9.5px;font-weight:700;letter-spacing:.02em;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--g);background:rgba(34,224,107,.1)}
+section.pg{display:none;animation:in .3s}
+section.pg.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+canvas.ch{width:100%;height:170px;display:block;margin-top:8px}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--mut);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.formula{font:12.5px var(--mono);color:var(--g);background:#07100a;border:1px dashed var(--gd);border-radius:12px;padding:10px 12px;margin:8px 0;overflow-x:auto;white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mut);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+td.n{font-family:var(--mono);text-align:right}
+.hrs{display:flex;align-items:center;gap:10px;margin:10px 0}
+.hrs .nm{flex:1;font-size:13px;font-weight:700}
+.hrs .nm small{display:block;color:var(--mut);font-weight:500}
+.hrs button{width:34px;height:34px;padding:0;font-size:18px}
+.hrs .val{font:700 14px var(--mono);min-width:46px;text-align:center}
+.hist{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.hist b{font-family:var(--mono)}
+.toast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,20px);background:var(--g);color:#03140a;padding:10px 16px;border-radius:99px;font-weight:700;font-size:13px;opacity:0;pointer-events:none;transition:.3s;z-index:50}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.yr{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin:10px 0}
+.yr button{padding:9px 0;font:700 12px var(--mono);background:#0b130e;color:var(--mut);border:1px solid var(--line)}
+.yr button.on{background:var(--g);color:#03140a;border-color:var(--g)}
+.yr button.done{color:var(--g);border-color:var(--gd)}
+ul.b{margin:8px 0 0;padding-left:18px;font-size:13.5px;line-height:1.6;color:#cfe3d6}
+.tag{font:600 11px var(--mono);letter-spacing:.18em;color:var(--g);text-transform:uppercase}
+.twin{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;margin:14px 0 8px}
+.bal{border-radius:18px;padding:14px;border:1px solid var(--line)}
+.bal .l{font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+.bal .a{font:800 clamp(17px,5.6vw,24px) var(--mono);margin:4px 0 6px;letter-spacing:-.03em}
+.bal svg{width:100%;height:46px;display:block}
+.bal.s{background:rgba(255,255,255,.05);color:#b9c4be}
+.bal.t{background:linear-gradient(160deg,var(--g),var(--g2));color:#03160c;border:0;box-shadow:0 0 40px rgba(34,224,107,.35),inset 0 1px 0 rgba(255,255,255,.4)}
+.twin .ar{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:var(--bg);border:1px solid var(--g);color:var(--g);display:grid;place-items:center;font:700 14px var(--mono);box-shadow:0 0 14px rgba(34,224,107,.5);z-index:2}
+.timer{display:inline-block;font:700 13px var(--mono);background:#000;border:1px solid var(--line);border-radius:8px;padding:4px 10px;color:var(--g)}
+.split{display:flex;height:42px;border-radius:12px;overflow:hidden;margin:6px 0 12px;font:700 10px var(--mono);color:#03160c}
+.split div{display:grid;place-items:center;text-align:center;line-height:1.1;padding:0 2px}
+.ph{padding:14px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.25);margin-bottom:10px}
+.ph .y{font:700 12px var(--mono);color:var(--g);letter-spacing:.08em}
+.ph h3{margin:4px 0 0;font-size:15px}
+.card.warnc{border-color:rgba(255,176,32,.45);background:rgba(255,176,32,.06)}
+.card.warnc h3{color:var(--warn);margin:0 0 8px;font-size:15px}
+.card.warnc p{font-size:13.5px;line-height:1.55;margin:0 0 8px;color:#e6d9bd}
+tr.hl td{color:var(--g)}
+table.sm td,table.sm th{font-size:12px;padding:9px 4px}
+.msub{display:none}.msub.on{display:block;animation:in .3s}
+.ph.sel{border-color:var(--g);box-shadow:0 0 26px -8px rgba(34,224,107,.65);background:rgba(34,224,107,.06)}
+.ph p{margin:6px 0 0;font-size:13px;line-height:1.5;color:#cfe3d6}
+.opts{display:grid;gap:8px;margin-top:8px}
+.opt{width:100%;text-align:left;background:#08100b;color:var(--txt);border:1px solid var(--line);padding:12px 14px;font-weight:600;font-size:14px}
+.opt.on{border-color:var(--g);background:rgba(34,224,107,.12);color:var(--g)}
+.qn{font:700 11px var(--mono);color:var(--g);letter-spacing:.12em}
+.qq{font-size:16px;font-weight:700;margin:4px 0 0}
+
+.sp-date{width:100%;min-width:0;-webkit-appearance:none;appearance:none;background:#08100b;border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:14px;font:600 16px var(--mono);outline:none;color-scheme:dark;min-height:50px}
+.sp-date:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(34,224,107,.15)}
+.sp-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.sp-row{background:#08100b;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.sp-row .d{font:700 14px var(--mono);margin-bottom:6px}
+.sp-row .v{display:flex;justify-content:space-between;gap:10px;font:600 13px var(--mono);color:var(--mut)}
+.sp-row .v b{font:700 15px var(--mono);color:var(--txt);display:block;margin-top:2px}
+.sp-row .v b.g{color:var(--g)}
+.sp-row .v div:last-child{text-align:right}
+.sp-h{margin-top:16px;font:700 15px var(--mono)}
+.sp-scroll{max-height:420px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:2px}
+.sp-big{background:#08100b;border:1px solid var(--g);border-radius:14px;padding:14px;margin-top:10px}
+.sp-big small{display:block;color:var(--mut);font-size:12px;font-weight:600;margin-bottom:4px}
+.sp-big b{font:700 24px var(--mono);color:var(--g)}
+
+@media (min-width: 700px){
+  .app{max-width:720px;padding:24px 24px 112px}
+  h1{font-size:30px}
+  nav .in{max-width:720px;margin:0 auto}
+}
+@media (min-width: 1100px){
+  .app{max-width:860px}
+  nav .in{max-width:860px}
+}
+.pwa-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.pwa-tools button{min-width:0}
+.restore-label{display:flex;align-items:center;justify-content:center;cursor:pointer;background:transparent;color:var(--g);border:1px solid var(--gd);border-radius:12px;padding:13px 10px;font-size:14px;font-weight:700;text-align:center}
+.restore-label input{display:none}
+</style>
+</head>
+<body>
+<div style="max-width:980px;margin:10px auto;padding:10px 14px;border:1px solid rgba(138,163,150,.35);border-radius:12px;color:var(--mut);font-size:12px;line-height:1.5">🔒 <b style="color:var(--g)">Private by design:</b> No sign-up · No subscription · No cloud sync. Your planner data is saved only in this browser/device. Use Download backup to move data manually; anyone with access to this device or an exported backup may be able to view it.</div>
+<div class="app">
+<header class="top">
+  <div class="brand">WEALTH<span>·OS</span></div>
+  <div class="pill" id="datePill">—</div>
+</header>
+
+<!-- ============ HOME ============ -->
+<section class="pg on" id="p-home">
+  <div class="hero">
+    <div class="lbl">My money now · tap to update</div>
+    <div class="big" id="hNet" onclick="focusBal()" style="cursor:pointer">₱0</div>
+    <div id="hDelta" style="font:600 12px var(--mono);opacity:.9"></div>
+    <canvas id="spark"></canvas>
+    <div class="row"><span id="hStart">Start ₱0</span><span id="hGoalTxt">Goal ₱100,000</span></div>
+    <div class="bar"><i id="hBar"></i></div>
+  </div>
+
+  <div class="card glow dark" style="margin-top:12px" id="balCard">
+    <b>Update my money</b>
+    <p class="sub" style="font-size:13px;margin:4px 0 0">Enter what you have right now (cash, savings and investments, minus debts). Log it regularly to watch your progress.</p>
+    <div class="grid2">
+      <div><label>Amount (₱)</label><input type="number" inputmode="decimal" id="balIn" placeholder="e.g. 5000"></div>
+      <div><label>Date</label><input type="date" id="balDate" style="font-size:14px"></div>
+    </div>
+    <div class="grid2" style="margin-top:12px">
+      <button onclick="setBal()">Set as my balance</button>
+      <button class="ghost" onclick="addBal()">+ Add to balance</button>
+    </div>
+    <div class="note"><b>Set</b> replaces your balance with what you have now. <b>Add</b> adds a deposit — use a negative number for a withdrawal.</div>
+  </div>
+
+  <h2>My progress</h2>
+  <div class="card">
+    <div class="grid2">
+      <div class="stat"><small>Started with</small><b id="pgStart">₱0</b></div>
+      <div class="stat"><small>Now</small><b class="g" id="pgNow">₱0</b></div>
+      <div class="stat"><small>Total change</small><b id="pgChg">₱0</b></div>
+      <div class="stat"><small>Goal reached</small><b id="pgPct">0%</b></div>
+    </div>
+    <canvas class="ch" id="balChart"></canvas>
+    <div class="note" id="pgPace">Log your balance at least twice, on different days, to see your pace.</div>
+    <div id="balHist" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card dark" style="margin-top:12px">
+    <label style="margin-top:0">My wealth goal (₱)</label>
+    <input type="number" inputmode="decimal" id="goal" value="100000">
+    <div class="note">Net worth = what you own − what you owe. Update it in the <b>Track</b> tab every month.</div>
+  </div>
+
+  <h2>Save & invest formula</h2>
+  <div class="formula">Surplus = Income − Needs − Wants − Learning</div>
+  <div class="formula">Surplus = Save + Invest</div>
+  <div class="card glow">
+    <div class="grid2">
+      <div><label style="margin-top:0">I get paid</label><select id="spFreq"><option value="m">Monthly</option><option value="w">Weekly</option></select></div>
+      <div><label style="margin-top:0">Income per period (₱)</label><input type="number" inputmode="decimal" id="spInc" placeholder="e.g. 20000"></div>
+      <div><label>Needs (₱)</label><input type="number" inputmode="decimal" id="spNeed" placeholder="food, bills…"></div>
+      <div><label>Wants (₱)</label><input type="number" inputmode="decimal" id="spWant" placeholder="fun"></div>
+      <div><label>Learning (₱)</label><input type="number" inputmode="decimal" id="spLrn" placeholder="skills, tools"></div>
+      <div><label>Emergency fund now (₱)</label><input type="number" inputmode="decimal" id="spEF" placeholder="0"></div>
+    </div>
+    <button class="ghost sm" style="margin-top:10px" onclick="planFromBudget()">Fill from my Budget tab</button>
+    <label>Emergency fund goal</label>
+    <select id="spMon"><option value="1">1 month of needs</option><option value="3" selected>3 months of needs</option><option value="6">6 months of needs</option></select>
+    <label>Surplus split: <b id="spSv" style="color:var(--g)">50% save · 50% invest</b></label>
+    <input type="range" id="spSplit" min="0" max="100" step="5" value="50">
+    <div style="display:flex;gap:10px;align-items:center;margin-top:2px"><small id="spSugg" style="color:var(--mut);flex:1"></small><button class="ghost sm" onclick="useSugg()">Use suggested</button></div>
+    <label>Assumed return: <b id="spRv" style="color:var(--g)">7%</b> · Years: <b id="spYv" style="color:var(--g)">10</b></label>
+    <input type="range" id="spRate" min="0" max="15" step="0.5" value="7">
+    <input type="range" id="spYrs" min="1" max="30" step="1" value="10">
+    <label id="spDepL">Deposit per month (₱)</label>
+    <input type="number" inputmode="decimal" id="spDep" placeholder="0">
+    <div id="spDepOut" style="margin-top:10px"></div>
+    <div class="card dark" style="margin-top:14px;padding:14px">
+      <b style="font-size:15px">📅 When do I start?</b>
+      <label style="margin-top:10px">Start date</label><input type="date" id="spStart" class="sp-date">
+      <label>Check my savings on</label><input type="date" id="spChk" class="sp-date">
+      <div class="note" style="margin-top:8px">Uses the deposit and "I get paid" setting above (weekly or monthly), starting on your start date.</div>
+      <div id="spStartOut" style="margin-top:10px"></div>
+    </div>
+    <div id="spOut" style="margin-top:12px"></div>
+  </div>
+
+  <h2>The wealth system</h2>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;text-align:center;gap:4px">
+      <div><div class="chip">1</div><div style="font-size:12px;margin-top:6px;font-weight:700">Earn</div></div>
+      <div><div class="chip">2</div><div style="font-size:12px;margin-top:6px;font-weight:700">Keep</div></div>
+      <div><div class="chip">3</div><div style="font-size:12px;margin-top:6px;font-weight:700">Learn</div></div>
+      <div><div class="chip">4</div><div style="font-size:12px;margin-top:6px;font-weight:700">Build</div></div>
+      <div><div class="chip">5</div><div style="font-size:12px;margin-top:6px;font-weight:700">Invest</div></div>
+    </div>
+    <div class="note">Skills create income → income creates surplus → surplus funds ownership → ownership builds wealth. The cycle repeats.</div>
+    <div class="note warn">Nobody can guarantee you'll be wealthy in 10 years. You improve the odds by raising income, controlling expenses, avoiding disasters and owning productive assets.</div>
+  </div>
+
+  <h2>10-year roadmap</h2>
+  <div class="card glow">
+    <small style="color:var(--mut)">Tap the year you're in. Move on when your finances are ready, not just by the calendar.</small>
+    <div class="yr" id="yrRow"></div>
+    <div id="stageBox"></div>
+  </div>
+
+  <h2>Your priorities</h2>
+  <div class="card">
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">1</div><span><b>Survival</b><em>Food, housing, transport, essentials.</em></span></div>
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">2</div><span><b>Stability</b><em>Reduce expensive debt, build a safety net.</em></span></div>
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">3</div><span><b>Growth</b><em>Learn skills, increase income.</em></span></div>
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">4</div><span><b>Ownership</b><em>Investments, a business, productive assets.</em></span></div>
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">5</div><span><b>Freedom</b><em>Assets and income that give you control of your time.</em></span></div>
+  </div>
+
+  <h2>First 90 days</h2>
+  <div class="card"><div id="c90"></div><div class="bar" style="margin-top:12px"><i id="b90"></i></div><small id="t90" style="color:var(--mut);display:block;margin-top:6px"></small></div>
+
+  <h2>Rules that protect your future</h2>
+  <div class="card">
+    <ul class="b">
+      <li>Never invest money you need for food, rent, medicine or bills.</li>
+      <li>Never borrow to invest in something you don't understand.</li>
+      <li>A high advertised return is not a safe investment.</li>
+      <li>Keep business money separate from personal spending.</li>
+      <li>Reinvest only when there's evidence it earns a worthwhile return.</li>
+      <li>Don't buy courses, gear or stock just because you feel you must spend to progress.</li>
+      <li>Let your lifestyle grow slower than your income.</li>
+      <li>Measure success by what you own, what you owe, and how reliably income covers needs.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ BUDGET ============ -->
+<section class="pg" id="p-budget">
+  <h1>Budget</h1>
+  <p class="sub">Divide every peso you actually receive — not money you hope to earn.</p>
+  <div class="formula">Income = Needs + Safety + Growth + Wants</div>
+  <div class="card glow">
+    <label style="margin-top:0">Money received this month (₱)</label>
+    <input type="number" inputmode="decimal" id="income" placeholder="e.g. 10000">
+
+    <div id="allocs"></div>
+
+    <div class="grid2" style="margin-top:6px">
+      <div class="stat"><small>Total allocated</small><b class="g" id="allocTot">100%</b></div>
+      <div class="stat"><small>Savings + learning</small><b id="sl">₱0</b></div>
+    </div>
+    <div class="note" id="allocNote">Sliders auto-balance to 100%. Follow it for a month, then adjust to your real expenses.</div>
+    <button class="ghost sm" style="margin-top:10px" onclick="resetAlloc()">Reset to 50 / 20 / 20 / 10</button>
+  </div>
+
+  <h2>Survival-first mode</h2>
+  <div class="card">
+    <p class="sub" style="margin:0">If basic needs eat most of your money, don't force 20% savings. Cover needs first, then split what's left.</p>
+    <label>My essential needs cost (₱)</label>
+    <input type="number" inputmode="decimal" id="needsCost" placeholder="e.g. 450">
+    <div id="survOut" style="margin-top:12px"></div>
+    <div class="note warn">Never skip food or necessary medicine to fund savings or learning. Use free learning resources instead.</div>
+  </div>
+
+  <h2>Goal: widen the gap</h2>
+  <div class="card"><div class="note" style="margin-top:0">Your first financial goal is to increase the gap between what you earn and what you must spend. That gap is the money you use to build your future.</div></div>
+</section>
+
+<!-- ============ INVEST ============ -->
+<section class="pg" id="p-invest">
+  <h1>Invest & compound</h1>
+  <p class="sub">See how steady contributions can grow. This is an illustration — not a promise.</p>
+  <div class="formula">Wealth = Contributions + Gains − Losses &amp; Costs</div>
+  <div class="formula">A = P(1 + r/n)^(nt)</div>
+  <div class="card glow">
+    <label style="margin-top:0">Monthly investment (₱)</label>
+    <input type="number" inputmode="decimal" id="iMonthly" value="1000">
+    <label>Starting amount (₱)</label>
+    <input type="number" inputmode="decimal" id="iStart" value="0">
+    <label>Assumed annual return: <b id="iRv" style="color:var(--g)">7%</b></label>
+    <input type="range" id="iRate" min="0" max="15" step="0.5" value="7">
+    <label>Years: <b id="iYv" style="color:var(--g)">10</b></label>
+    <input type="range" id="iYears" min="1" max="30" step="1" value="10">
+
+    <div class="grid2" style="margin-top:12px">
+      <div class="stat"><small>Projected value</small><b class="g" id="iFV">₱0</b></div>
+      <div class="stat"><small>Your contributions</small><b id="iC">₱0</b></div>
+      <div class="stat"><small>Illustrative growth</small><b class="g" id="iG">₱0</b></div>
+      <div class="stat"><small>Growth share</small><b id="iP">0%</b></div>
+    </div>
+    <canvas class="ch" id="invChart"></canvas>
+    <div class="legend"><span><i style="background:#22e06b"></i>Total value</span><span><i style="background:#8aa396"></i>Contributions</span></div>
+    <div class="note warn">Assumes end-of-month deposits, constant nominal return, monthly compounding, no taxes, fees or withdrawals. Real returns fluctuate and can be negative.</div>
+  </div>
+
+  <div class="card">
+    <b>What if I invest more?</b>
+    <div id="whatIf" style="margin-top:8px"></div>
+    <div class="note">How much you contribute matters enormously. Compounding helps, but it can't turn a tiny contribution into guaranteed riches in a few years.</div>
+  </div>
+
+  <h2>Order of operations</h2>
+  <div class="card"><div id="cInv"></div></div>
+
+  <h2>Stay safe</h2>
+  <div class="card">
+    <ul class="b">
+      <li>Check deposit-insurance coverage with <b>PDIC</b>.</li>
+      <li>Verify providers and authorizations with the <b>SEC Philippines</b> — a company's SEC registration alone doesn't mean every investment it offers is authorized.</li>
+      <li>Be suspicious of guaranteed high returns, recruitment-based schemes and pressure to invest right now.</li>
+    </ul>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <a class="chip" style="text-decoration:none" target="_blank" rel="noopener" href="https://www.sec.gov.ph/investors-education-and-information/">SEC investor education</a>
+      <a class="chip" style="text-decoration:none" target="_blank" rel="noopener" href="https://www.bsp.gov.ph/Pages/FinancialEducation/FinancialEducation.aspx">BSP financial education</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ₱1M PLAN ============ -->
+<section class="pg" id="p-million">
+  <div class="tabs" id="mTabs">
+    <button class="on" data-m="protocol">5-Yr Protocol</button>
+    <button data-m="plan">Millionaire Plan</button>
+    <button data-m="blueprint">My Blueprint</button>
+  </div>
+  <div class="msub on" id="ms-protocol">
+  <div class="tag">// 5-year wealth protocol</div>
+  <h1>From <span style="color:var(--g)">₱0</span> to ₱1,000,000</h1>
+  <p class="sub">Built for a 20-year-old earning from IT work and video editing. The real lever is not a secret investment — it's higher income plus a consistent savings rate.</p>
+
+  <div class="twin">
+    <div class="bal s">
+      <div class="l">Balance · Today</div>
+      <div class="a">₱0</div>
+      <svg viewBox="0 0 300 70" preserveAspectRatio="none"><path d="M0 52 H300" stroke="currentColor" stroke-opacity=".5" stroke-width="2" fill="none" stroke-dasharray="4 5"/></svg>
+    </div>
+    <div class="ar">→</div>
+    <div class="bal t">
+      <div class="l">Balance · Target</div>
+      <div class="a">₱1,000,000</div>
+      <svg viewBox="0 0 300 70" preserveAspectRatio="none"><path d="M0 62 L40 58 L80 56 L120 48 L160 44 L200 30 L240 22 L300 6" stroke="#03160c" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <div class="card dark">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <span class="timer" id="mWeek">—</span>
+      <small style="color:var(--mut);font-family:var(--mono);font-size:11px" id="mEnd"></small>
+    </div>
+    <div class="bar"><i id="mWbar"></i></div>
+    <label>My start date (260 weeks from here)</label>
+    <input type="date" id="mStart" style="font-size:15px">
+    <button style="margin-top:12px" onclick="setGoal1M()">Use ₱1,000,000 as my Home goal</button>
+  </div>
+
+  <div class="card warnc">
+    <h3>! No guarantee exists</h3>
+    <p>Investments can lose value, and no legitimate plan can guarantee a return. Anything promising guaranteed millions fast is a red flag.</p>
+    <p><b>The math:</b> ₱500/week for 5 years is only ₱130,000 contributed. Even at a strong 8% return it grows to about ₱160,000. Reaching ₱1M needs about <b>₱3,100–₱3,800 saved per week</b> — which means raising your income.</p>
+  </div>
+
+  <h2>01 · The numbers</h2>
+  <div class="card">
+    <p class="sub" style="font-size:12.5px;margin:0 0 8px">260 weekly contributions, compounded weekly. Before fees, taxes and inflation. Returns are hypothetical.</p>
+    <table class="sm">
+      <tr><th>Return / yr</th><th style="text-align:right">₱500/wk →</th><th style="text-align:right">Weekly for ₱1M</th></tr>
+      <tr><td>0%</td><td class="n">₱130,000</td><td class="n">₱3,846</td></tr>
+      <tr><td>3% savings acct</td><td class="n">₱140,200</td><td class="n">₱3,566</td></tr>
+      <tr><td>5% conservative</td><td class="n">₱147,500</td><td class="n">₱3,389</td></tr>
+      <tr class="hl"><td>8% stock index</td><td class="n">₱159,700</td><td class="n">₱3,130</td></tr>
+    </table>
+  </div>
+
+  <h2>02 · Weekly simulator</h2>
+  <div class="card glow">
+    <div class="grid2">
+      <div><label style="margin-top:0">Weekly savings (₱)</label><input type="number" inputmode="decimal" id="mW" value="500"></div>
+      <div><label style="margin-top:0">Annual return %</label><input type="number" inputmode="decimal" step="0.5" id="mR" value="5"></div>
+      <div><label>Years</label><input type="number" inputmode="decimal" id="mY" value="5"></div>
+      <div><label>Starting (₱)</label><input type="number" inputmode="decimal" id="mS" value="0"></div>
+    </div>
+    <div class="stat" style="margin-top:12px;border-color:rgba(34,224,107,.4);background:rgba(34,224,107,.07)">
+      <small>Estimated balance</small>
+      <b class="g" id="mRes" style="font-size:26px">₱0</b>
+      <div class="dark"><div class="bar"><i id="mProg"></i></div></div>
+      <small id="mPct" style="margin:6px 0 0"></small>
+    </div>
+    <div class="grid2" style="margin-top:10px">
+      <div class="stat"><small>Contributed</small><b id="mC">₱0</b></div>
+      <div class="stat"><small>Growth</small><b class="g" id="mG">₱0</b></div>
+    </div>
+    <div class="stat" style="margin-top:10px"><small>That's about</small><b id="mMonth">₱0</b></div>
+    <div class="note" id="mNeed"></div>
+  </div>
+
+  <h2>03 · Roadmap</h2>
+  <div class="ph"><div class="y">YEAR 1 · FOUNDATION</div><h3>Safety net and skills</h3>
+    <ul class="b"><li>Build 3–6 months of essential expenses in a PDIC-insured account.</li><li>Pick one income skill to push: video editing or IT work.</li><li>Build a portfolio of 5–10 real samples and start freelancing.</li><li>Target income: ₱20,000–₱30,000/month.</li></ul></div>
+  <div class="ph"><div class="y">YEAR 2 · IGNITE</div><h3>Start investing, raise rates</h3>
+    <ul class="b"><li>With the emergency fund full, automate a low-cost index fund contribution.</li><li>Raise prices every few clients; aim for recurring clients.</li><li>Target savings: ₱1,500–₱2,000/week.</li></ul></div>
+  <div class="ph"><div class="y">YEARS 3–4 · SCALE</div><h3>Specialize and earn more</h3>
+    <ul class="b"><li>Move into higher-paying niches: motion graphics, automation, cloud, security, data.</li><li>Consider remote work for foreign employers, which often pays far more.</li><li>Keep lifestyle growth well below income growth. Target savings: ₱3,000+/week.</li></ul></div>
+  <div class="ph"><div class="y">YEAR 5 · REVIEW</div><h3>Measure and adjust</h3>
+    <ul class="b"><li>Compare your balance to ₱1M. If short, the same habits usually get you there in 6–7 years.</li><li>Move money you need soon out of stocks.</li></ul></div>
+  <div class="note">This 5-year plan is the fast track. The 10-year roadmap on Home is the full journey — use both.</div>
+
+  <h2>04 · Allocation</h2>
+  <div class="card">
+    <div class="split">
+      <div style="width:65%;background:var(--g)">INDEX FUND<br>65%</div>
+      <div style="width:25%;background:#7df5bd">MP2 / TD<br>25%</div>
+      <div style="width:10%;background:#c9fbe3">CASH</div>
+    </div>
+    <p class="sub" style="font-size:13px;margin:0 0 10px">After the emergency fund is full. Until then, 100% goes to the safety net. Reinvesting in a laptop, software and courses can beat any fund, so budget for it separately. Check fees, minimums and terms with each provider, and verify licensing with the SEC/BSP.</p>
+    <span class="chip">PDIC savings</span><span class="chip">Index fund / UITF</span><span class="chip">Pag-IBIG MP2</span><span class="chip">Time deposit</span>
+  </div>
+
+  <h2>05 · Rules of the system</h2>
+  <div class="card">
+    <ul class="b">
+      <li>Pay yourself first: automate transfers on payday.</li>
+      <li>Track income and expenses; review once a month.</li>
+      <li>Avoid high-interest debt such as credit cards and online lending apps.</li>
+      <li>Never keep money you need within 3–5 years in stocks.</li>
+      <li>Skip crypto, leverage, "signals" and doubling schemes as your foundation.</li>
+    </ul>
+  </div>
+
+  <h2>06 · Milestones</h2>
+  <div class="card"><div id="cMs"></div></div>
+  <div class="note warn">Goals, not guarantees. General information only, not personalized financial advice. Consider a licensed advisor.</div>
+  </div><!-- /protocol -->
+
+  <!-- ===== MILLIONAIRE PLAN ===== -->
+  <div class="msub" id="ms-plan">
+    <div class="tag">// the millionaire plan</div>
+    <h1>Zero to <span style="color:var(--g)">₱1M</span>, ₱10M and beyond</h1>
+    <p class="sub">You don't become a millionaire by looking rich. You become one by building assets that make you money. Focus on three things:</p>
+    <div class="card">
+      <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">1</div><span><b>Increase your earning power</b></span></div>
+      <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">2</div><span><b>Build a business with consistent cash flow</b></span></div>
+      <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">3</div><span><b>Invest the profits into assets that compound</b></span></div>
+    </div>
+    <div class="note">You don't need 10 businesses, a perfect idea or a rich family. You need a valuable skill, a way to sell it, disciplined money management, and enough time to let the numbers work.</div>
+
+    <h2>01 · Define the target</h2>
+    <div id="stgBox"></div>
+    <div class="card dark">
+      <small style="color:var(--mut)">Your current balance (update it on Home or Track)</small>
+      <div style="display:flex;justify-content:space-between;font:700 13px var(--mono);margin-top:8px"><span>₱1M</span><span id="pg1" style="color:var(--g)">0%</span></div>
+      <div class="bar"><i id="pb1"></i></div>
+      <div style="display:flex;justify-content:space-between;font:700 13px var(--mono);margin-top:12px"><span>₱10M</span><span id="pg10" style="color:var(--g)">0%</span></div>
+      <div class="bar"><i id="pb10"></i></div>
+      <div class="note">Net worth = everything you own financially − everything you owe. Revenue is not profit, and profit is not personal wealth.</div>
+    </div>
+
+    <h2>02 · Choose your engine</h2>
+    <p class="sub" style="font-size:13px">You can combine paths, but start with one primary engine. Tap one to mark it as yours.</p>
+    <div id="pathBox"></div>
+    <div class="note"><b>Recommendation:</b> with limited savings, start with a skill or service business. Investments matter, but you can't invest money you never earn.</div>
+
+    <h2>03 · Your first 90 days</h2>
+    <p class="sub" style="font-size:13px">Stop consuming motivational content. Build something people will pay for.</p>
+    <div id="p90Box"></div>
+    <div class="note warn">Don't switch business ideas every week. Give one reasonable strategy time to produce evidence. If customers aren't buying, diagnose the offer, market, pricing and sales process before spending more.</div>
+
+    <h2>04 · Build your money system</h2>
+    <div class="card">
+      <small style="color:var(--mut)">Illustrative split of every ₱100 of take-home income, once essentials are covered</small>
+      <div class="split" style="margin-top:10px">
+        <div style="width:50%;background:var(--g)">LIVING<br>50%</div>
+        <div style="width:20%;background:#7df5bd">SAVE+<br>INVEST<br>20%</div>
+        <div style="width:20%;background:#a8f7d1">GROW<br>20%</div>
+        <div style="width:10%;background:#c9fbe3">FUN<br>10%</div>
+      </div>
+      <div class="note warn" style="margin-top:0">Not a rigid rule. If income is low or unstable, cover essentials, meet debt obligations and build a cash buffer before following these percentages.</div>
+      <button class="ghost sm" style="margin-top:10px" onclick="go('budget')">Open my Budget calculator</button>
+    </div>
+    <div class="card"><div id="rlBox"></div></div>
+
+    <h2>05 · The mathematics</h2>
+    <div class="card">
+      <p class="sub" style="font-size:13px;margin:0 0 8px">Starting from zero with a fixed monthly investment, how long to reach ₱1 million?</p>
+      <label style="margin-top:0">Illustrative annual return %</label>
+      <input type="number" inputmode="decimal" step="0.5" id="pmR" value="6">
+      <table class="sm" style="margin-top:10px">
+        <tr><th>Monthly</th><th style="text-align:right">No growth</th><th style="text-align:right" id="pmH">At 6% / yr</th></tr>
+        <tbody id="pmBody"></tbody>
+      </table>
+      <div class="note">End-of-month contributions, constant nominal return compounded monthly. Taxes, fees, inflation and losses excluded. Math illustrations, not forecasts.</div>
+    </div>
+    <div class="card glow">
+      <b>Try your own numbers</b>
+      <div class="grid2">
+        <div><label>Monthly investment (₱)</label><input type="number" inputmode="decimal" id="pmM" value="5000"></div>
+        <div><label>Starting amount (₱)</label><input type="number" inputmode="decimal" id="pmS" value="0"></div>
+      </div>
+      <label>Target</label>
+      <select id="pmT"><option value="1000000">₱1,000,000</option><option value="10000000">₱10,000,000</option></select>
+      <div id="pmOut" style="margin-top:12px"></div>
+    </div>
+    <div class="note">In the beginning, increasing the amount you can invest often matters more than hunting for a higher return. Earning ₱15,000/month can't invest ₱20,000 — the first mission is to raise income. Earning ₱100,000? The mission may be controlling expenses and investing consistently.</div>
+
+    <h2>06 · ₱1M → ₱10M</h2>
+    <div class="card"><div id="stBox"></div></div>
+    <div class="note warn">A business can grow wealth faster than saving alone, but it can also fail. Don't count an imaginary valuation as spendable wealth. Focus on actual cash flow, sustainable profits and realistic asset values.</div>
+    <div class="card glow" style="margin-top:12px;text-align:center">
+      <b>Ready to make it personal?</b>
+      <p class="sub" style="margin:6px 0 10px">Answer seven questions and get your own blueprint.</p>
+      <button onclick="openMsub('blueprint')">Build my millionaire blueprint</button>
+    </div>
+    <div class="note">Don't make getting rich your daily task. Make the work that creates wealth your daily task: build a skill, talk to customers, create value, manage your money, improve your business.</div>
+  </div><!-- /plan -->
+
+  <!-- ===== BLUEPRINT ===== -->
+  <div class="msub" id="ms-blueprint">
+    <div class="tag">// personal blueprint</div>
+    <h1>Build my blueprint</h1>
+    <p class="sub">Answer seven questions. Estimates are fine. Your answers are saved on this device.</p>
+    <div id="bpQ"></div>
+    <div class="card dark">
+      <div style="display:flex;justify-content:space-between;font:700 12px var(--mono);color:var(--mut)"><span>Answered</span><span id="bpCnt">0 / 7</span></div>
+      <div class="bar"><i id="bpBar"></i></div>
+      <button style="margin-top:12px" onclick="buildBlueprint()">Build my millionaire blueprint</button>
+    </div>
+    <div id="bpOut"></div>
+  </div><!-- /blueprint -->
+</section>
+
+<!-- ============ LEARN ============ -->
+<section class="pg" id="p-learn">
+  <h1>Learn</h1>
+  <p class="sub">Learning is an investment in your earning power — and much of it can be free.</p>
+  <div class="formula">Learning Budget = Income × Learning Rate</div>
+  <div class="card glow">
+    <label style="margin-top:0">Monthly income (₱)</label>
+    <input type="number" inputmode="decimal" id="lIncome" placeholder="e.g. 10000">
+    <label>My situation</label>
+    <select id="lSit">
+      <option value="0">Struggling to cover necessities</option>
+      <option value="1" selected>Basic needs covered, little savings</option>
+      <option value="2">Financially stable</option>
+      <option value="3">Growing a business / changing careers</option>
+    </select>
+    <div class="grid2" style="margin-top:12px">
+      <div class="stat"><small>Suggested rate</small><b id="lRate">1–3%</b></div>
+      <div class="stat"><small>Monthly learning budget</small><b class="g" id="lBud">—</b></div>
+    </div>
+    <div class="note" id="lNote"></div>
+  </div>
+
+  <h2>3-stage skill strategy</h2>
+  <div class="card">
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">1</div><span><b>Learn for free · ₱0–₱100/mo</b><em>Free tutorials, docs, libraries. Focus on ONE useful skill.</em></span></div>
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">2</div><span><b>Build proof · ₱0–₱500/mo</b><em>Sample work, portfolio, real problems. Buy only tools that help you deliver.</em></span></div>
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">3</div><span><b>Turn it into income</b><em>Find paying clients, collect feedback, buy training only for real gaps.</em></span></div>
+    <div class="note warn">Don't spend ₱10,000 learning to make money before you've tried to earn your first ₱100 from the skill.</div>
+  </div>
+
+  <h2>Skills that can earn</h2>
+  <div class="card">
+    <table>
+      <tr><td><b>Video editing</b><br><small style="color:var(--mut)">Short-form, captions, thumbnails</small></td></tr>
+      <tr><td><b>Web development</b><br><small style="color:var(--mut)">HTML, CSS, JS, landing pages</small></td></tr>
+      <tr><td><b>Selling & delivery</b><br><small style="color:var(--mut)">Food, supplies, essentials; preorders first</small></td></tr>
+      <tr><td><b>Sales & operations</b><br><small style="color:var(--mut)">Customers, orders, costing, retention</small></td></tr>
+    </table>
+    <div class="note">Pick a skill that customers pay for, that you can learn with what you have, and that fits your strengths.</div>
+  </div>
+
+  <h2>Weekly routine tracker</h2>
+  <div class="card" id="routine"></div>
+  <button class="ghost" onclick="newWeek()">Start a new week</button>
+</section>
+
+<!-- ============ BUILD ============ -->
+<section class="pg" id="p-build">
+  <h1>Build</h1>
+  <p class="sub">Find your profit per sale before you spend on anything big.</p>
+  <div class="formula">Profit = Sales − All Business Costs</div>
+  <div class="formula">Unit Profit = Selling Price − Unit Cost</div>
+  <div class="card glow">
+    <label style="margin-top:0">Selling price per order (₱)</label>
+    <input type="number" inputmode="decimal" id="bPrice" value="100">
+    <label>Product & packaging (₱)</label>
+    <input type="number" inputmode="decimal" id="bProd" value="65">
+    <label>Delivery & transaction fees (₱)</label>
+    <input type="number" inputmode="decimal" id="bDel" value="10">
+    <label>Ads / other cost per order (₱)</label>
+    <input type="number" inputmode="decimal" id="bOth" value="0">
+    <label>Orders per month</label>
+    <input type="number" inputmode="decimal" id="bOrd" value="100">
+    <label>Fixed monthly costs (₱)</label>
+    <input type="number" inputmode="decimal" id="bFix" value="0">
+    <label>Hours you spend per month</label>
+    <input type="number" inputmode="decimal" id="bHrs" value="20">
+
+    <div class="grid2" style="margin-top:12px">
+      <div class="stat"><small>Unit profit</small><b class="g" id="bUnit">₱0</b></div>
+      <div class="stat"><small>Margin</small><b id="bMar">0%</b></div>
+      <div class="stat"><small>Sales</small><b id="bSales">₱0</b></div>
+      <div class="stat"><small>Monthly profit</small><b class="g" id="bProf">₱0</b></div>
+    </div>
+    <div class="stat" style="margin-top:10px"><small>Earnings per hour of your time</small><b id="bHr">₱0</b></div>
+    <div class="note" id="bNote"></div>
+  </div>
+
+  <h2>Where profit goes</h2>
+  <div class="card">
+    <p class="sub" style="margin:0">Pay business costs first, then split the profit. Pick the preset that fits you.</p>
+    <div class="tabs" style="margin-top:10px">
+      <button id="pr0" class="on" onclick="setPreset(0)">Stable 40/30/20/10</button>
+      <button id="pr1" onclick="setPreset(1)">Shaky cash flow</button>
+      <button id="pr2" onclick="setPreset(2)">Tight at home</button>
+    </div>
+    <div id="splitOut"></div>
+    <div class="note" id="presetNote"></div>
+  </div>
+
+  <h2>Business models</h2>
+  <div class="card">
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">1</div><span><b>Service</b><em>Lowest capital. Sell your skills & time with tools you already own.</em></span></div>
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">2</div><span><b>Product</b><em>Small test batches, preorders, low stock. Reinvest after you know margins & demand.</em></span></div>
+    <div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">3</div><span><b>Scalable</b><em>Systems, recurring contracts, digital products, a team — after proof people keep paying.</em></span></div>
+  </div>
+
+  <h2>Your first 30 days</h2>
+  <div class="card"><div id="c30"></div></div>
+</section>
+
+<!-- ============ TRACK ============ -->
+<section class="pg" id="p-track">
+  <h1>Track</h1>
+  <p class="sub">Your salary isn't your wealth. Revenue isn't profit. Log these numbers once a month.</p>
+  <div class="card glow">
+    <label style="margin-top:0">Month</label>
+    <input type="text" id="tMonth" style="font-family:inherit">
+    <div class="grid2">
+      <div><label>Take-home income (₱)</label><input type="number" inputmode="decimal" id="tInc"></div>
+      <div><label>Amount saved (₱)</label><input type="number" inputmode="decimal" id="tSav"></div>
+      <div><label>Invested (₱)</label><input type="number" inputmode="decimal" id="tInv"></div>
+      <div><label>Learning spent (₱)</label><input type="number" inputmode="decimal" id="tLrn"></div>
+      <div><label>Business revenue (₱)</label><input type="number" inputmode="decimal" id="tRev"></div>
+      <div><label>Business costs (₱)</label><input type="number" inputmode="decimal" id="tCost"></div>
+      <div><label>Total assets (₱)</label><input type="number" inputmode="decimal" id="tAss"></div>
+      <div><label>Total debts (₱)</label><input type="number" inputmode="decimal" id="tLia"></div>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+      <div class="stat"><small>Savings rate</small><b id="kSav">—</b></div>
+      <div class="stat"><small>Investment rate</small><b id="kInv">—</b></div>
+      <div class="stat"><small>Business profit</small><b id="kProf">—</b></div>
+      <div class="stat"><small>Net worth</small><b class="g" id="kNet">—</b></div>
+    </div>
+    <button style="margin-top:14px" onclick="saveEntry()">Save this month</button>
+    <div class="note">Be conservative when valuing a private business. Look at trends over several months, not one bad month.</div>
+  </div>
+
+  <h2>Net worth trend</h2>
+  <div class="card"><canvas class="ch" id="netChart"></canvas></div>
+
+  <h2>History</h2>
+  <div class="card" id="hist"><small style="color:var(--mut)">No months saved yet.</small></div>
+  <div class="pwa-tools">
+    <button class="ghost" onclick="exportData()">Download backup</button>
+    <label class="restore-label">Restore backup<input type="file" id="restoreFile" accept="application/json,.json" onchange="importData(event)"></label>
+  </div>
+  <button class="ghost" style="margin-top:8px;border-color:#3a1d1d;color:var(--bad)" onclick="wipe()">Erase all data</button>
+  <div class="note" style="margin-top:12px"><b>Privacy:</b> your data lives only in this browser and is <b>not encrypted</b>. Anyone who can open this device or your backup file can read it. Keep backups private and export them regularly &mdash; clearing browser data or uninstalling erases everything.</div>
+  <div class="note" style="margin-top:8px"><b>Educational estimates only.</b> Projections use the numbers and return rates you enter. They are not financial advice and not a guarantee of results.</div>
+</section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<nav><div class="in">
+  <button class="on" data-p="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button data-p="budget"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9h9"/></svg>Budget</button>
+  <button data-p="invest"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Invest</button>
+  <button data-p="million"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg>₱1M</button>
+  <button data-p="learn"><svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>Learn</button>
+  <button data-p="build"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V5h8v3"/></svg>Build</button>
+  <button data-p="track"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Track</button>
+</div></nav>
+
+<script>
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const peso = n => (n<0?'−':'') + '₱' + Math.round(Math.abs(n)).toLocaleString('en-PH');
+const num = id => { const v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+const pct = (a,b) => b>0 ? (a/b*100) : null;
+const pctTxt = v => v===null ? '—' : v.toFixed(1)+'%';
+let S = {};
+const KEY = 'wealthos.v1';
+try { S = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){ S = {}; }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); return true; }catch(e){ console.error('Wealth OS could not save locally:', e); toast('Could not save on this device. Export a backup or free storage.'); return false; } }
+function toast(t){ const el=$('toast'); el.textContent=t; el.classList.add('on'); setTimeout(()=>el.classList.remove('on'),1800); }
+S.checks = S.checks || {}; S.entries = S.entries || [];
+S.alloc = S.alloc || {needs:50,safety:20,learn:20,wants:10};
+S.hours = S.hours || {learn:0,sell:0,manage:0,review:0};
+S.year = S.year || 1;
+
+/* ---------- nav ---------- */
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('section.pg').forEach(s=>s.classList.toggle('on',s.id==='p-'+b.dataset.p));
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(b.dataset.p==='invest') calcInvest();
+  if(b.dataset.p==='track') drawNet();
+  if(b.dataset.p==='home') drawHome();
+  if(b.dataset.p==='million'){ weeks(); calcMillion(); drawStages(); }
+});
+$('datePill').textContent = new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}).toUpperCase();
+
+/* ---------- charts ---------- */
+function setupCanvas(c){
+  const r=c.getBoundingClientRect(), d=window.devicePixelRatio||1;
+  c.width=Math.max(1,r.width*d); c.height=Math.max(1,r.height*d);
+  const x=c.getContext('2d'); x.setTransform(d,0,0,d,0,0);
+  return {x,w:r.width,h:r.height};
+}
+function drawLines(c, series, opts={}){
+  const {x,w,h}=setupCanvas(c); x.clearRect(0,0,w,h);
+  if(!w||!h) return;
+  const padL=opts.axis?44:6, padR=6, padT=8, padB=opts.axis?20:6;
+  const all=series.flatMap(s=>s.data); if(!all.length) return;
+  let mn=opts.min!==undefined?opts.min:Math.min(...all), mx=Math.max(...all);
+  if(mx===mn){mx=mn+1;}
+  const n=Math.max(...series.map(s=>s.data.length));
+  const X=i=> padL + (n<=1?0:i/(n-1))*(w-padL-padR);
+  const Y=v=> padT + (1-(v-mn)/(mx-mn))*(h-padT-padB);
+  if(opts.axis){
+    x.strokeStyle='rgba(138,163,150,.18)'; x.fillStyle='#8aa396'; x.font='10px ui-monospace,monospace'; x.lineWidth=1;
+    for(let i=0;i<=3;i++){
+      const v=mn+(mx-mn)*i/3, y=Y(v);
+      x.beginPath(); x.moveTo(padL,y); x.lineTo(w-padR,y); x.stroke();
+      const t = v>=1e6? (v/1e6).toFixed(1)+'M' : v>=1e3? Math.round(v/1e3)+'k' : Math.round(v);
+      x.textAlign='right'; x.fillText('₱'+t,padL-6,y+3);
+    }
+    if(opts.xlabels){ x.textAlign='center'; opts.xlabels.forEach(([i,t])=>x.fillText(t,X(i),h-5)); }
+  }
+  series.forEach(s=>{
+    if(s.data.length===1){ x.fillStyle=s.color; x.beginPath(); x.arc(X(0),Y(s.data[0]),4,0,7); x.fill(); return; }
+    x.beginPath(); s.data.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(X(i),Y(v)));
+    if(s.fill){
+      const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,s.fill); g.addColorStop(1,'rgba(34,224,107,0)');
+      x.save(); x.lineTo(X(s.data.length-1),h-padB); x.lineTo(X(0),h-padB); x.closePath(); x.fillStyle=g; x.fill(); x.restore();
+      x.beginPath(); s.data.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(X(i),Y(v)));
+    }
+    x.strokeStyle=s.color; x.lineWidth=s.w||2.5; x.lineJoin='round'; x.lineCap='round';
+    if(s.dash) x.setLineDash(s.dash); else x.setLineDash([]);
+    x.shadowColor=s.glow||'transparent'; x.shadowBlur=s.glow?10:0; x.stroke(); x.shadowBlur=0; x.setLineDash([]);
+  });
+}
+
+/* ---------- generic checklists ---------- */
+function renderChecklist(containerId, prefix, items, onChange){
+  const el=$(containerId); el.innerHTML='';
+  items.forEach((it,i)=>{
+    const k=prefix+i, d=document.createElement('div');
+    d.className='chk'+(S.checks[k]?' on':'');
+    d.innerHTML='<div class="bx">✓</div><span>'+it+'</span>';
+    d.onclick=()=>{ S.checks[k]=!S.checks[k]; d.classList.toggle('on',S.checks[k]); save(); onChange&&onChange(); };
+    el.appendChild(d);
+  });
+}
+const L90=[
+ '<b>Week 1</b><em>Write down all income, expenses and debts</em>',
+ '<b>Week 1</b><em>Identify the ONE skill you will focus on</em>',
+ '<b>Week 1</b><em>Set a realistic first savings target</em>',
+ '<b>Weeks 2–4</b><em>Study & practice ~30 min on most days</em>',
+ '<b>Weeks 2–4</b><em>Create 2–3 sample projects or a small product test</em>',
+ '<b>Weeks 2–4</b><em>Talk to at least 10 potential customers</em>',
+ '<b>Month 2</b><em>Make your first paid offer</em>',
+ '<b>Month 2</b><em>Track costs and profit for each order</em>',
+ '<b>Month 2</b><em>Ask customers for feedback and referrals</em>',
+ '<b>Month 3</b><em>Aim for repeat customers or another paid project</em>',
+ '<b>Month 3</b><em>Review your income and spending</em>',
+ '<b>Month 3</b><em>Improve your offer and set the next 90-day goal</em>'];
+const LINV=[
+ '<b>Protect your basics</b><em>Keep money for food, bills & emergencies — even a small buffer.</em>',
+ '<b>Tackle expensive debt</b><em>High-interest debt can swallow investment gains. Keep cash for necessities.</em>',
+ '<b>Build an emergency fund</b><em>1 month of essentials first, then 3–6 months.</em>',
+ '<b>Start with understandable, regulated options</b><em>Insured deposits, government securities, diversified regulated funds.</em>',
+ '<b>Invest regularly & diversify</b><em>Don\'t put everything in one company, coin or speculative asset.</em>',
+ '<b>Reinvest & review</b><em>Check fees and taxes; review periodically instead of reacting to every swing.</em>'];
+const L30=[
+ '<b>Days 1–7: Find a problem</b><em>Talk to 10 potential customers. What do they struggle to buy or wish were better?</em>',
+ '<b>Days 8–14: Create a simple offer</b><em>One product/service, all costs calculated, fair price, test willingness to pay.</em>',
+ '<b>Days 15–21: Get first customers</b><em>Show samples, use preorders, deliver reliably. No heavy spending on logos/ads yet.</em>',
+ '<b>Days 22–30: Review the numbers</b><em>Profit per order, repeat buyers, feedback, time spent. Improve or change.</em>'];
+function upd90(){
+  const d=L90.filter((_,i)=>S.checks['c90_'+i]).length;
+  $('b90').style.width=(d/12*100)+'%'; $('t90').textContent=d+' / 12 done';
+}
+renderChecklist('c90','c90_',L90,upd90); upd90();
+renderChecklist('cInv','inv_',LINV);
+renderChecklist('c30','c30_',L30);
+
+/* ---------- home: net worth, goal, stage ---------- */
+$('goal').value = S.goal || 100000;
+$('goal').oninput=()=>{ S.goal=num('goal'); save(); drawHome(); };
+function latestNet(){ if(S.bal&&S.bal.length) return S.bal[S.bal.length-1].v; const e=S.entries[S.entries.length-1]; return e? e.assets-e.liab : 0; }
+function drawHomeOld(){
+  const net=latestNet(), goal=S.goal||100000;
+  $('hNet').textContent=peso(net);
+  $('hGoalTxt').textContent='Goal '+peso(goal);
+  $('hBar').style.width=Math.max(0,Math.min(100,net/goal*100))+'%';
+  const data=S.entries.map(e=>e.assets-e.liab);
+  const pts = data.length? [0,...data] : [0,0];
+  drawLines($('spark'),[{data:pts,color:'#fff',w:3,fill:'rgba(255,255,255,.35)',glow:'rgba(255,255,255,.6)'}],{min:Math.min(0,...pts)});
+}
+const STAGES=[
+ {y:'1–2',n:'Foundation',t:'Become financially stable',b:['Track every peso you earn and spend','Learn one marketable skill','Build a portfolio or find a better-paying job','Start a tiny service or product business','Save an initial emergency buffer; avoid high-interest debt','Reinvest in your ability to earn before chasing risky returns'],m:'You can earn independently, know your costs, and have a repeatable savings habit.'},
+ {y:'3–4',n:'Growth',t:'Increase your earning power',b:['Improve your skill and charge appropriately','Pursue better employment or higher-value clients','Build repeat business and referrals','Separate personal and business finances','Track monthly profit; build several months of expenses as emergency fund'],m:'Income is more predictable and you save regularly without neglecting necessities.'},
+ {y:'5–6',n:'Ownership',t:'Turn your work into a business',b:['Specialize in the most profitable offers','Create standard procedures and consistent quality','Build recurring revenue where possible','Outsource or hire only when numbers justify it','Contribute regularly to suitable diversified investments'],m:'Your income no longer depends on finding a new customer for every peso.'},
+ {y:'7–8',n:'Expansion',t:'Make the business more resilient',b:['Expand only products/services with proven demand','Reduce dependence on a single customer or income source','Strengthen accounting, taxes, contracts and cash flow','Avoid excessive borrowing to expand','Increase investments as surplus grows'],m:'Your business runs more consistently and survives ordinary setbacks.'},
+ {y:'9–10',n:'Financial freedom',t:'Protect and grow what you own',b:['Build wealth outside the business, not just inside it','Maintain cash reserves and appropriate insurance','Diversify instead of betting on one asset','Delegate operations where practical','Measure progress by net worth, sustainable cash flow and resilience'],m:'Meaningful assets, more choices about how you work, and a plan to keep building.'}];
+function drawStage(){
+  const yr=S.year, idx=Math.floor((yr-1)/2), s=STAGES[idx];
+  const row=$('yrRow'); row.innerHTML='';
+  for(let i=1;i<=10;i++){ const b=document.createElement('button'); b.textContent=i; b.className=(i===yr?'on':(i<yr?'done':'')); b.onclick=()=>{S.year=i;save();drawStage();}; row.appendChild(b); }
+  $('stageBox').innerHTML='<div class="chip">YEARS '+s.y+'</div><div class="chip">STAGE '+(idx+1)+'</div><h1 style="font-size:20px;margin:10px 0 2px">'+s.n+'</h1><div style="color:var(--g);font-weight:700;font-size:14px">'+s.t+'</div><ul class="b">'+s.b.map(x=>'<li>'+x+'</li>').join('')+'</ul><div class="note"><b>Milestone:</b> '+s.m+'</div>';
+}
+drawStage();
+
+/* ---------- budget ---------- */
+const AK=[['needs','Essential needs','Food, transport, bills, housing'],['safety','Safety & savings','Emergency fund first, then goals'],['learn','Learning & income growth','Skills, tools, testing a small business'],['wants','Wants','Entertainment & enjoyment']];
+$('income').value = S.income||'';
+function buildAlloc(){
+  const box=$('allocs'); box.innerHTML='';
+  AK.forEach(([k,n,d])=>{
+    const w=document.createElement('div'); w.className='alloc';
+    w.innerHTML='<div class="hd"><span>'+n+'</span><span class="v" id="av_'+k+'"></span></div><small>'+d+'</small><input type="range" min="0" max="100" step="1" id="as_'+k+'">';
+    box.appendChild(w);
+    const r=w.querySelector('input'); r.value=S.alloc[k];
+    r.oninput=()=>rebalance(k,+r.value);
+  });
+  showAlloc();
+}
+function rebalance(k,v){
+  const others=AK.map(a=>a[0]).filter(x=>x!==k), rem=100-v;
+  const tot=others.reduce((s,x)=>s+S.alloc[x],0);
+  let vals={}, sum=0;
+  others.forEach(x=>{ vals[x]= tot===0? rem/others.length : S.alloc[x]/tot*rem; vals[x]=Math.round(vals[x]); sum+=vals[x]; });
+  vals[others[others.length-1]] += rem-sum;
+  if(vals[others[others.length-1]]<0) vals[others[others.length-1]]=0;
+  S.alloc[k]=v; others.forEach(x=>S.alloc[x]=vals[x]);
+  save(); showAlloc();
+}
+function showAlloc(){
+  const inc=num('income'); let t=0;
+  AK.forEach(([k])=>{ const p=S.alloc[k]; t+=p; $('as_'+k).value=p; $('av_'+k).textContent=p+'% · '+peso(inc*p/100); });
+  $('allocTot').textContent=t+'%';
+  $('sl').textContent=peso(inc*(S.alloc.safety+S.alloc.learn)/100);
+  $('allocNote').textContent = S.alloc.needs>=80 ? 'Needs take most of your income. Cover necessities first, then look for ways to raise income — start with whatever you can afford.' : 'Sliders auto-balance to 100%. Follow it for a month, then adjust to your real expenses.';
+}
+function resetAlloc(){ S.alloc={needs:50,safety:20,learn:20,wants:10}; save(); showAlloc(); toast('Reset'); }
+$('income').oninput=()=>{ S.income=$('income').value; save(); showAlloc(); survival(); };
+function survival(){
+  const inc=num('income'), nd=num('needsCost'), el=$('survOut');
+  if(!inc||!nd){ el.innerHTML='<small style="color:var(--mut)">Enter your income above and your essential needs cost.</small>'; return; }
+  const left=inc-nd;
+  if(left<0){ el.innerHTML='<div class="note bad">Your needs (<b>'+peso(nd)+'</b>) are higher than your income (<b>'+peso(inc)+'</b>). The priority is raising income or trimming costs — no shame, that\'s the real starting point.</div>'; return; }
+  const h=left/2;
+  el.innerHTML='<table><tr><td>Essential needs</td><td class="n">'+peso(nd)+'</td></tr><tr><td>Emergency savings</td><td class="n">'+peso(h)+'</td></tr><tr><td>Learning</td><td class="n">'+peso(left-h)+'</td></tr><tr><td>Wants</td><td class="n">₱0</td></tr><tr><td><b>Total</b></td><td class="n"><b>'+peso(inc)+'</b></td></tr></table>';
+}
+$('needsCost').oninput=survival;
+buildAlloc(); survival();
+
+/* ---------- invest ---------- */
+function fv(P0,m,rAnnual,years){
+  const i=rAnnual/12, n=years*12;
+  if(i===0) return P0+m*n;
+  return P0*Math.pow(1+i,n) + m*((Math.pow(1+i,n)-1)/i);
+}
+function calcInvest(){
+  const m=num('iMonthly'), p0=num('iStart'), r=+$('iRate').value/100, y=+$('iYears').value;
+  $('iRv').textContent=(r*100).toFixed(1).replace('.0','')+'%'; $('iYv').textContent=y;
+  const F=fv(p0,m,r,y), C=p0+m*y*12, G=F-C;
+  $('iFV').textContent=peso(F); $('iC').textContent=peso(C); $('iG').textContent=peso(G);
+  $('iP').textContent=F>0?(G/F*100).toFixed(0)+'%':'0%';
+  const tot=[],con=[]; for(let k=0;k<=y;k++){ tot.push(fv(p0,m,r,k)); con.push(p0+m*k*12); }
+  const xl=[[0,'0']]; const step=y>12?5:(y>6?2:1); for(let k=step;k<=y;k+=step) xl.push([k,k+'y']);
+  drawLines($('invChart'),[{data:con,color:'#8aa396',dash:[5,4],w:2},{data:tot,color:'#22e06b',fill:'rgba(34,224,107,.35)',glow:'rgba(34,224,107,.7)'}],{axis:true,min:0,xlabels:xl});
+  const rows=[0.5,1,2].map(f=>{ const mm=m*f; return '<tr><td>'+peso(mm)+'/mo</td><td class="n">'+peso(fv(p0,mm,r,y))+'</td></tr>'; }).join('');
+  $('whatIf').innerHTML='<table><tr><th>Monthly</th><th style="text-align:right">After '+y+' yrs</th></tr>'+rows+'</table>';
+  S.inv={m:$('iMonthly').value,p:$('iStart').value,r:$('iRate').value,y:$('iYears').value}; save();
+}
+if(S.inv){ $('iMonthly').value=S.inv.m; $('iStart').value=S.inv.p; $('iRate').value=S.inv.r; $('iYears').value=S.inv.y; }
+['iMonthly','iStart','iRate','iYears'].forEach(id=>$(id).oninput=calcInvest);
+calcInvest();
+
+/* ---------- learn ---------- */
+const SIT=[{r:'₱0–₱50',lo:0,hi:0,fix:'₱0–₱50 / month',note:'Cover necessities first. Use free tutorials, libraries, community resources and help from trusted people. You can learn a lot for free.'},
+ {r:'1–3%',lo:.01,hi:.03,note:'Stay mostly free. Spend only on tools or resources that directly help you practice or deliver work.'},
+ {r:'5–10%',lo:.05,hi:.10,note:'You can afford some structured training. Still, learn enough to start, test the market, then invest more once you know what customers need.'},
+ {r:'10–15%',lo:.10,hi:.15,note:'Temporary higher budget while growing a business or changing careers — only if affordable. Buy training only for a real limitation.'}];
+function calcLearn(){
+  const s=SIT[+$('lSit').value], inc=num('lIncome');
+  $('lRate').textContent=s.r;
+  $('lBud').textContent = s.fix ? '₱0–₱50' : (inc? peso(inc*s.lo)+'–'+peso(inc*s.hi) : '—');
+  $('lNote').textContent=s.note;
+  S.learn={inc:$('lIncome').value,sit:$('lSit').value}; save();
+}
+if(S.learn){ $('lIncome').value=S.learn.inc; $('lSit').value=S.learn.sit; }
+$('lIncome').oninput=calcLearn; $('lSit').onchange=calcLearn; calcLearn();
+
+const RT=[['learn','Learn','Target 3–5 h/week',5],['sell','Sell','Target 2–5 h/week',5],['manage','Manage money','Target 0.5 h/week',0.5],['review','Review','Target 0.5 h/week',0.5]];
+function drawRoutine(){
+  const box=$('routine'); box.innerHTML='';
+  RT.forEach(([k,n,t,max])=>{
+    const v=S.hours[k], d=document.createElement('div'); d.className='dark';
+    d.innerHTML='<div class="hrs"><div class="nm">'+n+'<small>'+t+'</small></div><button class="ghost" data-d="-0.5">−</button><div class="val">'+v+'h</div><button data-d="0.5">+</button></div><div class="bar" style="margin:0 0 4px"><i style="width:'+Math.min(100,v/max*100)+'%"></i></div>';
+    d.querySelectorAll('button').forEach(b=>b.onclick=()=>{ S.hours[k]=Math.max(0,S.hours[k]+parseFloat(b.dataset.d)); save(); drawRoutine(); });
+    box.appendChild(d);
+  });
+}
+function newWeek(){ S.hours={learn:0,sell:0,manage:0,review:0}; save(); drawRoutine(); toast('New week started'); }
+drawRoutine();
+
+/* ---------- build ---------- */
+const PRE=[[40,30,20,10,'Once basics & finances are stable: 40% reinvest · 30% personal · 20% long-term investments · 10% reserves.'],
+           [30,20,15,35,'Unstable cash flow? Prioritize reserves so one slow month doesn\'t sink the business.'],
+           [10,60,10,20,'Struggling to afford food? You may need more personal income and less reinvestment. That\'s okay.']];
+S.preset = S.preset||0;
+function setPreset(i){ S.preset=i; save(); calcBuild(); }
+function calcBuild(){
+  const price=num('bPrice'), uc=num('bProd')+num('bDel')+num('bOth'), ord=num('bOrd'), fix=num('bFix'), hrs=num('bHrs');
+  const unit=price-uc, sales=price*ord, prof=unit*ord-fix;
+  $('bUnit').textContent=peso(unit); $('bUnit').className=unit>=0?'g':'r';
+  $('bMar').textContent=price>0?(unit/price*100).toFixed(0)+'%':'0%';
+  $('bSales').textContent=peso(sales); $('bProf').textContent=peso(prof); $('bProf').className=prof>=0?'g':'r';
+  $('bHr').textContent=hrs>0? peso(prof/hrs)+' / hour':'—';
+  $('bNote').className='note'+(unit<=0?' bad':'');
+  $('bNote').textContent = unit<=0 ? 'You lose money on every sale. Raise the price or cut costs before selling more.' : 'Sales ≠ profit: you sell '+peso(sales)+' but keep '+peso(prof)+' after all costs, before taxes and pay for your time.';
+  const p=PRE[S.preset]; document.querySelectorAll('.tabs button[id^=pr]').forEach((b,i)=>b.classList.toggle('on',i===S.preset));
+  const names=['Reinvest in business','Personal income & household','Long-term investments','Business reserves'];
+  const base=Math.max(0,prof);
+  $('splitOut').innerHTML='<table>'+names.map((n,i)=>'<tr><td>'+n+' <span class="chip" style="margin-left:4px">'+p[i]+'%</span></td><td class="n">'+peso(base*p[i]/100)+'</td></tr>').join('')+'</table>';
+  $('presetNote').textContent=p[4];
+  S.biz={price:$('bPrice').value,prod:$('bProd').value,del:$('bDel').value,oth:$('bOth').value,ord:$('bOrd').value,fix:$('bFix').value,hrs:$('bHrs').value}; save();
+}
+if(S.biz){ $('bPrice').value=S.biz.price;$('bProd').value=S.biz.prod;$('bDel').value=S.biz.del;$('bOth').value=S.biz.oth;$('bOrd').value=S.biz.ord;$('bFix').value=S.biz.fix;$('bHrs').value=S.biz.hrs; }
+['bPrice','bProd','bDel','bOth','bOrd','bFix','bHrs'].forEach(id=>$(id).oninput=calcBuild);
+calcBuild();
+
+/* ---------- track ---------- */
+$('tMonth').value=new Date().toLocaleDateString('en-PH',{month:'long',year:'numeric'});
+function kpis(){
+  const inc=num('tInc');
+  $('kSav').textContent=pctTxt(pct(num('tSav'),inc));
+  $('kInv').textContent=pctTxt(pct(num('tInv'),inc));
+  const pr=num('tRev')-num('tCost'); $('kProf').textContent=peso(pr); $('kProf').className=pr>=0?'g':'r';
+  const nw=num('tAss')-num('tLia'); $('kNet').textContent=peso(nw); $('kNet').className=nw>=0?'g':'r';
+}
+['tInc','tSav','tInv','tLrn','tRev','tCost','tAss','tLia'].forEach(id=>$(id).oninput=kpis);
+function saveEntry(){
+  if(!num('tInc') && !num('tAss') && !num('tRev')){ toast('Enter at least income or assets'); return; }
+  const e={m:$('tMonth').value||'Month',inc:num('tInc'),sav:num('tSav'),inv:num('tInv'),lrn:num('tLrn'),rev:num('tRev'),cost:num('tCost'),assets:num('tAss'),liab:num('tLia')};
+  const i=S.entries.findIndex(x=>x.m===e.m); if(i>=0) S.entries[i]=e; else S.entries.push(e);
+  if(e.assets||e.liab) upsertBal(e.assets-e.liab,todayISO()); save(); drawHist(); drawNet(); drawHome(); toast('Saved ✓');
+}
+function escapeHTML(value){ return String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])); }
+function drawHist(){
+  const h=$('hist');
+  if(!S.entries.length){ h.innerHTML='<small style="color:var(--mut)">No months saved yet.</small>'; return; }
+  h.innerHTML=S.entries.map((e,i)=>{
+    const prev=S.entries[i-1], g=prev&&prev.inc>0?((e.inc-prev.inc)/prev.inc*100):null;
+    const gt=g===null?'':'<span class="chip" style="margin:0 0 0 6px;'+(g<0?'color:var(--bad);background:rgba(255,93,93,.1)':'')+'">'+(g>=0?'+':'')+g.toFixed(1)+'% income</span>';
+    return '<div class="hist"><div><b style="font-family:inherit">'+escapeHTML(e.m)+'</b>'+gt+'<br><small style="color:var(--mut)">Save '+pctTxt(pct(e.sav,e.inc))+' · Invest '+pctTxt(pct(e.inv,e.inc))+' · Biz '+peso(e.rev-e.cost)+'</small></div><div style="text-align:right"><b style="color:var(--g)">'+peso(e.assets-e.liab)+'</b><br><small style="color:var(--mut);cursor:pointer" onclick="delEntry('+i+')">remove</small></div></div>';
+  }).join('');
+}
+function delEntry(i){ S.entries.splice(i,1); save(); drawHist(); drawNet(); drawHome(); }
+function drawNet(){
+  const d=S.entries.map(e=>e.assets-e.liab);
+  if(!d.length){ const c=$('netChart'),{x,w,h}=setupCanvas(c); x.fillStyle='#8aa396'; x.font='13px sans-serif'; x.textAlign='center'; x.fillText('Save a month to see your trend',w/2,h/2); return; }
+  drawLines($('netChart'),[{data:d,color:'#22e06b',fill:'rgba(34,224,107,.35)',glow:'rgba(34,224,107,.7)'}],{axis:true,xlabels:d.length>1?[[0,S.entries[0].m.slice(0,3)],[d.length-1,S.entries[d.length-1].m.slice(0,3)]]:[]});
+}
+function exportData(){
+  const payload={app:'Wealth OS',version:1,exportedAt:new Date().toISOString(),data:S};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download='wealth-os-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast('Backup downloaded');
+}
+function sanitizeBackup(d){
+  const isObj=v=>v&&typeof v==='object'&&!Array.isArray(v);
+  const fin=v=>typeof v==='number'&&isFinite(v);
+  const out={};
+  if(d.checks!==undefined){ if(!isObj(d.checks)) throw new Error('checks'); out.checks={}; Object.keys(d.checks).slice(0,2000).forEach(k=>{ if(/^[\w-]{1,40}$/.test(k)) out.checks[k]=!!d.checks[k]; }); }
+  if(d.entries!==undefined){
+    if(!Array.isArray(d.entries)||d.entries.length>5000) throw new Error('entries');
+    out.entries=d.entries.map(e=>{
+      if(!isObj(e)) throw new Error('entry');
+      const o={m:typeof e.m==='string'?e.m.slice(0,60):'Month'};
+      ['inc','sav','inv','lrn','rev','cost','assets','liab'].forEach(k=>{ o[k]=fin(e[k])?e[k]:0; });
+      return o;
+    });
+  }
+  if(d.bal!==undefined){
+    if(!Array.isArray(d.bal)||d.bal.length>20000) throw new Error('bal');
+    out.bal=d.bal.filter(b=>isObj(b)&&fin(b.v)&&typeof b.d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(b.d)).map(b=>({d:b.d,v:b.v}));
+  }
+  if(d.alloc!==undefined){
+    if(!isObj(d.alloc)) throw new Error('alloc');
+    const a={}; ['needs','safety','learn','wants'].forEach(k=>{ if(!fin(d.alloc[k])||d.alloc[k]<0||d.alloc[k]>100) throw new Error('alloc'); a[k]=d.alloc[k]; });
+    out.alloc=a;
+  }
+  ['goal'].forEach(k=>{ if(fin(d[k])&&d[k]>=0) out[k]=d[k]; });
+  ['stage','engine'].forEach(k=>{ if(Number.isInteger(d[k])&&d[k]>=0&&d[k]<50) out[k]=d[k]; });
+  if(typeof d.income==='string'||fin(d.income)) out.income=d.income;
+  if(typeof d.mStart==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d.mStart)) out.mStart=d.mStart;
+  // simple calculator inputs: keep only short string/number values
+  ['inv','learn','biz','sim','pm','plan','bp'].forEach(k=>{
+    if(!isObj(d[k])) return; const o={};
+    Object.keys(d[k]).slice(0,60).forEach(f=>{ const v=d[k][f]; if(/^[\w-]{1,30}$/.test(f)&&((typeof v==='string'&&v.length<=40)||fin(v))) o[f]=v; });
+    out[k]=o;
+  });
+  return out;
+}
+function importData(event){
+  const file=event.target.files&&event.target.files[0]; if(!file)return;
+  if(file.size > 5 * 1024 * 1024){ alert('Backup is too large. Choose a file under 5 MB.'); event.target.value=''; return; }
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const parsed=JSON.parse(reader.result);
+      const incoming=parsed&&parsed.data&&typeof parsed.data==='object'?parsed.data:parsed;
+      if(!incoming||typeof incoming!=='object'||Array.isArray(incoming))throw new Error('Invalid backup');
+      if(parsed && parsed.app && parsed.app !== 'Wealth OS') throw new Error('Wrong app');
+      const clean=sanitizeBackup(incoming);
+      if(!confirm('Restore this backup? Your current Wealth OS data on this device will be replaced. (The previous data is kept once as a safety copy.)')){event.target.value='';return;}
+      let previous=null; try{ previous=localStorage.getItem(KEY); }catch(_){}
+      if(previous){ try{ localStorage.setItem(KEY+'.prev',previous); }catch(_){} }
+      localStorage.setItem(KEY,JSON.stringify(clean));
+      location.reload();
+    }catch(e){alert('Could not restore this file. Please select a valid Wealth OS JSON backup.');event.target.value='';}
+  };
+  reader.readAsText(file);
+}
+function wipe(){ if(confirm('Erase ALL saved data on this device?')){ try{localStorage.removeItem(KEY);localStorage.removeItem(KEY+'.prev');}catch(e){} location.reload(); } }
+drawHist(); kpis();
+
+/* ---------- ₱1M plan ---------- */
+function fmtDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+S.mStart = S.mStart || fmtDate(new Date());
+$('mStart').value = S.mStart;
+function weeks(){
+  const p=($('mStart').value||'').split('-'); if(p.length<3) return;
+  const st=new Date(+p[0],+p[1]-1,+p[2]), now=new Date();
+  const wk=Math.floor((now-st)/604800000)+1, w=Math.max(0,Math.min(260,wk));
+  $('mWeek').textContent = wk<1 ? 'Starts soon' : (wk>260 ? '260 / 260 · review time' : 'Week '+w+' of 260');
+  $('mWbar').style.width=(w/260*100)+'%';
+  const end=new Date(st); end.setDate(end.getDate()+260*7);
+  $('mEnd').textContent='Finish '+end.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+}
+$('mStart').onchange=()=>{ S.mStart=$('mStart').value; save(); weeks(); };
+function calcMillion(){
+  const g=id=>{ const v=parseFloat($(id).value); return isFinite(v)?v:0; };
+  const w=g('mW'), r=g('mR')/100, y=g('mY')||1, s=g('mS');
+  const n=Math.round(52*y), i=r/52, gr=Math.pow(1+i,n);
+  const F=s*gr+(i===0?w*n:w*(gr-1)/i), C=s+w*n;
+  $('mRes').textContent=peso(F); $('mC').textContent=peso(C); $('mG').textContent=peso(F-C);
+  $('mProg').style.width=Math.max(0,Math.min(100,F/10000))+'%';
+  $('mPct').textContent=(F/10000).toFixed(1)+'% of ₱1,000,000';
+  $('mMonth').textContent=peso(w*52/12)+' / month saved';
+  const fac=i===0?n:(gr-1)/i;
+  $('mNeed').textContent='Weekly savings needed for ₱1,000,000 with these settings: '+peso(Math.max(0,(1000000-s*gr)/fac));
+  S.sim={w:$('mW').value,r:$('mR').value,y:$('mY').value,s:$('mS').value}; save();
+}
+if(S.sim){ $('mW').value=S.sim.w; $('mR').value=S.sim.r; $('mY').value=S.sim.y; $('mS').value=S.sim.s; }
+['mW','mR','mY','mS'].forEach(id=>$(id).oninput=calcMillion);
+function setGoal1M(){ S.goal=1000000; $('goal').value=1000000; save(); drawHome(); toast('Home goal set to ₱1,000,000'); }
+renderChecklist('cMs','ms_',[
+ '<b>Month 1</b><em>Savings account open, expenses tracked, skill chosen</em>',
+ '<b>Month 6</b><em>Portfolio live, first paying clients</em>',
+ '<b>Month 12</b><em>Emergency fund complete, income ₱20k+/month</em>',
+ '<b>Year 2</b><em>Automated investing, higher rates</em>',
+ '<b>Year 3</b><em>Income ₱40k+/month, saving ₱2,000+/week</em>',
+ '<b>Year 4</b><em>Saving ₱3,000+/week</em>',
+ '<b>Year 5</b><em>Review. ₱1M reachable in Years 5–7 depending on income</em>']);
+weeks(); calcMillion();
+/* ---------- Millionaire Plan + Blueprint ---------- */
+function go(p){ const b=document.querySelector('nav button[data-p="'+p+'"]'); if(b) b.click(); }
+function openMsub(m){ const b=document.querySelector('#mTabs button[data-m="'+m+'"]'); if(b) b.click(); }
+document.querySelectorAll('#mTabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#mTabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.msub').forEach(s=>s.classList.toggle('on',s.id==='ms-'+b.dataset.m));
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(b.dataset.m==='plan') drawStages();
+});
+function monthsTo(T,P,m,r){
+  if(P>=T) return 0;
+  const i=r/12;
+  if(i===0) return m>0?(T-P)/m:Infinity;
+  if(m<=0) return P>0?Math.log(T/P)/Math.log(1+i):Infinity;
+  const k=m/i; return Math.log((T+k)/(P+k))/Math.log(1+i);
+}
+const yrs=mo=> mo<=0?'Reached' : (!isFinite(mo)||mo>=600?'50+ yrs':(mo/12).toFixed(1)+' yrs');
+
+/* targets */
+const STG=[['STAGE 1','₱1 million net worth','Your first major financial milestone.'],['STAGE 2','₱10 million net worth','A substantial base of investments and business equity.'],['STAGE 3','Financial independence','Your assets can cover your living expenses.']];
+S.stage=S.stage||0;
+function drawStages(){
+  $('stgBox').innerHTML=STG.map((s,i)=>'<div class="ph'+(S.stage===i?' sel':'')+'" onclick="S.stage='+i+';save();drawStages()"><div class="y">'+s[0]+(S.stage===i?' · MY CURRENT TARGET':'')+'</div><h3>'+s[1]+'</h3><p>'+s[2]+'</p></div>').join('');
+  const net=latestNet(), a=Math.max(0,Math.min(100,net/1e6*100)), b=Math.max(0,Math.min(100,net/1e7*100));
+  $('pg1').textContent=a.toFixed(1)+'%'; $('pb1').style.width=a+'%';
+  $('pg10').textContent=b.toFixed(2)+'%'; $('pb10').style.width=b+'%';
+}
+/* paths */
+const PATHS=[
+ ['PATH A','High-income skill','Best starting point with little capital','Learn sales, video editing, web development, digital marketing, design, or AI-assisted business automation. Sell your skill to businesses locally or internationally.','Goal: your first reliable ₱30k–₱100k monthly income — a target, not a guarantee.'],
+ ['PATH B','Build a business','','Sell a service or product that solves a painful problem. Start with a service business if capital is limited so you can validate demand before buying inventory.','Goal: repeat customers, positive margins, and systems that don\'t depend entirely on your personal time.'],
+ ['PATH C','Invest consistently','','Build emergency savings, then invest for the long term in diversified, regulated investments suited to your goals and risk tolerance.','Goal: turn earned income into assets that can grow without requiring more hours of work.']];
+function drawPaths(){
+  $('pathBox').innerHTML=PATHS.map((p,i)=>'<div class="ph'+(S.engine===i?' sel':'')+'" onclick="S.engine='+i+';save();drawPaths()"><div class="y">'+p[0]+(S.engine===i?' · ★ MY PRIMARY ENGINE':'')+'</div><h3>'+p[1]+'</h3>'+(p[2]?'<small style="color:var(--g)">'+p[2]+'</small>':'')+'<p>'+p[3]+'</p><p style="color:var(--mut)">'+p[4]+'</p></div>').join('');
+}
+/* 90 days */
+const P90=[
+ ['DAYS 1–30','Choose one valuable skill',['Pick one market with customers who have money and an urgent problem','Study and practice one skill 1–2 hours daily','Create three sample projects that show what you can do','Speak with potential customers to learn what they actually buy'],'Target: one clear offer and a portfolio you can show to prospects.'],
+ ['DAYS 31–60','Get your first paying customers',['Identify 10–20 qualified prospects per working day','Send personalized outreach or ask for referrals','Offer a clearly defined service with a measurable outcome','Deliver excellent work and ask for a testimonial or referral'],'Target: land your first paying client and learn why customers buy.'],
+ ['DAYS 61–90','Turn it into repeatable income',['Improve delivery and document your process','Request referrals and follow up with prospects','Adjust pricing based on customer value and actual results','Track revenue, expenses, profit and hours worked'],'Target: a repeatable customer-acquisition process, working toward consistent monthly income.']];
+function drawP90(){
+  $('p90Box').innerHTML=P90.map((p,i)=>'<div class="ph"><div class="y">'+p[0]+'</div><h3>'+p[1]+'</h3><div id="p90_'+i+'" style="margin-top:6px"></div><div class="note">'+p[3]+'</div></div>').join('');
+  P90.forEach((p,i)=>renderChecklist('p90_'+i,'p90_'+i+'_',p[2]));
+}
+const RL=['Build an emergency fund, ideally 3–6 months of essential expenses','Pay down high-interest debt before taking substantial investment risks','Separate personal money from business money','Automate saving or investing when cash flow permits','Avoid lifestyle inflation as your income grows','Never risk money you need for rent, food, medical expenses or near-term obligations'];
+const ST=[['Validate','Prove people repeatedly pay for your offer before investing heavily in the business.'],['Systemize','Build repeatable sales, delivery, customer service and bookkeeping processes.'],['Scale','Improve your offer, increase retention, and hire carefully when the economics justify it.'],['Diversify','Move some profits into assets outside your business so your net worth isn\'t tied to one company.'],['Protect','Maintain liquidity, avoid excessive debt, and understand your tax and legal obligations.']];
+/* math */
+function drawMath(){
+  const r=(parseFloat($('pmR').value)||0)/100;
+  $('pmH').textContent='At '+(r*100)+'% / yr';
+  $('pmBody').innerHTML=[5000,10000,20000,30000].map(m=>'<tr><td>'+peso(m)+'</td><td class="n">'+yrs(monthsTo(1e6,0,m,0))+'</td><td class="n">'+yrs(monthsTo(1e6,0,m,r))+'</td></tr>').join('');
+  const T=+$('pmT').value, P=num('pmS'), m=num('pmM'), inc=num('income');
+  let h='<div class="grid2"><div class="stat"><small>No growth</small><b>'+yrs(monthsTo(T,P,m,0))+'</b></div><div class="stat"><small>At '+(r*100)+'% / yr</small><b class="g">'+yrs(monthsTo(T,P,m,r))+'</b></div></div>';
+  if(inc>0 && m>inc) h+='<div class="note bad">That monthly amount is more than the income you entered in Budget ('+peso(inc)+'). The first mission is to raise income.</div>';
+  $('pmOut').innerHTML=h;
+  S.pm={r:$('pmR').value,m:$('pmM').value,s:$('pmS').value,t:$('pmT').value}; save();
+}
+if(S.pm){ $('pmR').value=S.pm.r; $('pmM').value=S.pm.m; $('pmS').value=S.pm.s; $('pmT').value=S.pm.t; }
+['pmR','pmM','pmS'].forEach(id=>$(id).oninput=drawMath); $('pmT').onchange=drawMath;
+drawStages(); drawPaths(); drawP90(); drawMath();
+renderChecklist('rlBox','rl_',RL);
+renderChecklist('stBox','st_',ST.map((s,i)=>'<b>'+(i+1)+'. '+s[0]+'</b><em>'+s[1]+'</em>'));
+
+/* blueprint questionnaire */
+const BPQ=[
+ {k:'age',q:"What's your age range?",o:['Under 18','18–25','26–35','36–45','46+']},
+ {k:'inc',q:"What's your monthly take-home income?",o:['No income yet','Under ₱10,000','₱10,000–₱30,000','₱30,000–₱60,000','₱60,000–₱100,000','Over ₱100,000']},
+ {k:'sav',q:'How much do you have saved or invested?',o:['₱0','Under ₱50,000','₱50,000–₱250,000','₱250,000–₱1 million','Over ₱1 million']},
+ {k:'time',q:'How much time can you commit daily?',o:['Under 1 hour','1–2 hours','2–4 hours','Full time']},
+ {k:'path',q:'Which path interests you most?',o:['Freelancing / high-income skills','Start a business','Long-term investing','Career growth / high-paying job','Not sure — recommend the best path']},
+ {k:'goal',q:"What's your primary financial goal?",o:['First ₱1 million net worth','₱10 million net worth','₱1 million monthly income','Financial independence']},
+ {k:'skill',q:"What's your strongest skill right now?",o:['Sales and communication','Technology and AI','Creative work / design / video','Operations / management',"I'm starting from zero"]}];
+S.bp=S.bp||{};
+function drawBpQ(){
+  $('bpQ').innerHTML=BPQ.map((q,qi)=>'<div class="card"><div class="qn">QUESTION '+(qi+1)+' / 7</div><div class="qq">'+q.q+'</div><div class="opts">'+q.o.map((o,oi)=>'<button class="opt'+(S.bp[q.k]===oi?' on':'')+'" onclick="pick(\''+q.k+'\','+oi+')">'+o+'</button>').join('')+'</div></div>').join('');
+  const n=BPQ.filter(q=>S.bp[q.k]!==undefined).length;
+  $('bpCnt').textContent=n+' / 7'; $('bpBar').style.width=(n/7*100)+'%';
+}
+function pick(k,i){ S.bp[k]=i; save(); const y=window.scrollY; drawBpQ(); window.scrollTo(0,y); }
+drawBpQ();
+
+function buildBlueprint(){
+  const a=S.bp;
+  if(BPQ.some(q=>a[q.k]===undefined)){ toast('Answer all 7 questions first'); return; }
+  const INC=[0,5000,20000,45000,80000,110000], SAV=[0,25000,150000,625000,1000000];
+  const inc=INC[a.inc], start=SAV[a.sav];
+  let p=a.path, auto='';
+  if(p===4){ p=(a.sav>=3&&a.inc>=3)?2:0; auto=' · recommended for your situation'; }
+  const T=a.goal===1?1e7:1e6;
+  const goalNm=['First ₱1 million net worth','₱10 million net worth','₱1 million monthly income','Financial independence'][a.goal];
+  const ENG=[
+   ['Path A · High-income skill','Learn one valuable skill and sell it to businesses locally or internationally. Goal: your first reliable ₱30k–₱100k monthly income (a target, not a guarantee).'],
+   ['Path B · Build a business','Sell a service or product that solves a painful problem. With limited capital, start with a service so you can validate demand before buying inventory.'],
+   ['Path C · Invest consistently','Build emergency savings first, then invest for the long term in diversified, regulated options that fit your goals and risk tolerance.'],
+   ['Career growth · High-paying job','Build in-demand skills, prove your results and move into higher-paying roles. Commit each raise to savings before lifestyle.']][p];
+  const SK=[['Sales or lead-generation services for small businesses','Customer outreach / appointment setting','Client and account management'],['Web development and landing pages','AI-assisted business automation','IT support, cloud or data work'],['Short-form video editing','Graphic and brand design','Content services: captions, thumbnails, repurposing'],['Operations support for small businesses','Order, inventory and bookkeeping help','Project coordination'],['Pick ONE beginner-friendly skill (e.g. video editing or basic sales/communication) and commit to it for 30 days','Finish 3 practice projects before you pitch anyone','Use free learning resources while income is low']][a.skill];
+  const TIME=['Under 1 hour/day: ~40 min skill practice + ~20 min outreach. Progress will be slower — consistency beats cramming.','1–2 hours/day: ~60–90 min skill practice + ~30 min outreach or delivery. This matches the 90-day plan.','2–4 hours/day: ~1–2 h skill, ~1 h outreach, ~1 h client work or project building.','Full time: ~3 h skill and projects, ~3 h outreach and client work, ~1 h tracking money and reviewing results.'][a.time];
+  const MONEY=a.inc===0?'No income yet: your first mission is any paying work. Keep learning costs at ₱0–₱100/month using free resources until income starts.'
+    : a.inc===1?'Under ₱10,000: use the survival-first budget. Cover essentials, keep a small cash buffer, and never skip food or medicine to save. The priority is raising income.'
+    : 'Use the illustrative 50/20/20/10 split: 50% living, 20% saving and investing, 20% business growth and skills, 10% fun. Adjust if essentials take more.';
+  const EF=a.sav<=1?'Build an emergency fund of 3–6 months of essential expenses first (start with even one month). Pay down high-interest debt before taking investment risk.':'Make sure your emergency fund covers 3–6 months of essentials and high-interest debt is cleared before adding investment risk.';
+  const TAIL=[
+   ['Choose one skill ('+SK[0].split(' (')[0]+') and practise it 1–2 hours a day; build 3 samples.','Contact 10–20 prospects per working day; land your first paying client.','Document your process, ask for referrals, adjust pricing, track revenue, expenses, profit and hours.'],
+   ['Talk to potential customers, pick one painful problem and write a simple service offer.','Run a small test or pre-sell; deliver well and ask for testimonials.','Track revenue, costs and profit per customer; fix the offer before spending more.'],
+   ['Track spending, open an insured savings account and start your emergency fund; learn how regulated options work.','Automate saving; verify any provider with the SEC/BSP and compare fees and terms.','Review spending; start small regular contributions once the emergency fund is on track, and add a skill to raise income.'],
+   ['Pick a high-demand skill for your target role, practise daily and build proof of work.','Apply, network and ask for referrals — or prepare a results-based case for a raise.','Track income growth and commit the increase to savings before lifestyle.']][p];
+  const AGE=['Under 18: involve a parent or guardian for bank or investment accounts and any contracts or online work. Skill-building and a portfolio are your biggest early advantage.','18–25: time is your advantage. Build skills and income early, and let consistent saving start small.','26–35: balance building income with consistent saving; avoid lifestyle inflation as pay rises.','36–45: balance growth with protection; account for dependents, obligations and a solid cash buffer.','46+: your horizon is shorter. Prioritize income, liquidity and an emergency fund, avoid excessive risk, and keep money you need soon out of stocks.'][a.age];
+  let proj='';
+  if(inc>0){
+    const m1=inc*0.2, m2=m1*2;
+    const row=(lbl,m)=>'<tr><td>'+lbl+'<br><small style="color:var(--mut)">'+peso(m)+'/mo</small></td><td class="n">'+yrs(monthsTo(T,start,m,0))+'</td><td class="n">'+yrs(monthsTo(T,start,m,.06))+'</td></tr>';
+    proj='<table class="sm"><tr><th>Scenario</th><th style="text-align:right">No growth</th><th style="text-align:right">6% / yr</th></tr>'+row('Save & invest 20% of income',m1)+row('If your income doubles',m2)+'</table><div class="note">Time to reach '+(a.goal===1?'₱10M':'₱1M')+(a.goal>=2?' (first milestone toward your goal)':'')+', using the middle of your income and savings brackets (income ≈ '+peso(inc)+'/mo, savings ≈ '+peso(start)+'). Estimates only — not forecasts. Notice how much more doubling income helps than chasing returns.</div>';
+  } else proj='<div class="note">Your timeline projection unlocks once you have income. First mission: land your first paying client.</div>';
+  const warn=(p===2&&a.inc<=1)?'<div class="note bad">You chose investing, but with little or no income there\'s not much to invest. Pair it with a skill or service to raise income first — you can\'t invest money you never earn.</div>':'';
+  const card=(t,body)=>'<div class="card"><div class="qn">'+t+'</div>'+body+'</div>';
+  $('bpOut').innerHTML='<h2>Your millionaire blueprint</h2>'+
+   '<div class="card glow"><div class="qn">YOUR ENGINE'+auto.toUpperCase()+'</div><h1 style="font-size:20px;margin:6px 0">'+ENG[0]+'</h1><p class="sub" style="margin:0">'+ENG[1]+'</p><div class="chip" style="margin-top:10px">GOAL · '+goalNm+'</div></div>'+warn+
+   card('SKILLS TO CONSIDER','<ul class="b">'+SK.map(x=>'<li>'+x+'</li>').join('')+'</ul>')+
+   card('YOUR DAILY TIME','<p class="sub" style="margin:6px 0 0">'+TIME+'</p>')+
+   card('YOUR MONEY SYSTEM','<p class="sub" style="margin:6px 0 0">'+MONEY+'</p><p class="sub" style="margin:8px 0 0">'+EF+'</p>')+
+   card('YOUR TIMELINE',proj)+
+   card('YOUR NEXT 90 DAYS','<div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">1</div><span><b>Days 1–30</b><em>'+TAIL[0]+'</em></span></div><div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">2</div><span><b>Days 31–60</b><em>'+TAIL[1]+'</em></span></div><div class="chk" style="cursor:default"><div class="bx" style="border-color:var(--g);color:var(--g)">3</div><span><b>Days 61–90</b><em>'+TAIL[2]+'</em></span></div>')+
+   card('FOR YOUR AGE','<p class="sub" style="margin:6px 0 0">'+AGE+'</p>')+
+   '<div class="note warn">This blueprint is a rule-based starting point built from your answers. Goals are not guarantees; investments can lose value. General information only, not personalized financial advice — consider a licensed advisor.</div>'+
+   '<div class="grid2" style="margin-top:12px"><button class="ghost" onclick="copyBp()">Copy blueprint</button><button onclick="go(\'budget\')">Open Budget</button></div>';
+  S.engine=Math.min(p,2); save(); drawPaths();
+  setTimeout(()=>$('bpOut').scrollIntoView({behavior:'smooth'}),50);
+}
+async function copyBp(){ const t=$('bpOut').innerText; try{ await navigator.clipboard.writeText(t); toast('Blueprint copied'); }catch(e){ prompt('Copy your blueprint:',t); } }
+
+/* ---------- balance log, progress, save & invest planner ---------- */
+S.bal=S.bal||[];
+function todayISO(){ return fmtDate(new Date()); }
+function upsertBal(v,d){
+  const i=S.bal.findIndex(x=>x.d===d);
+  if(i>=0) S.bal[i].v=v; else S.bal.push({d:d,v:v});
+  S.bal.sort((a,b)=>a.d<b.d?-1:(a.d>b.d?1:0));
+}
+function readAmt(){ const raw=$('balIn').value; if(raw===''||!isFinite(+raw)) return null; return +raw; }
+function setBal(){
+  const v=readAmt(); if(v===null){ toast('Enter an amount first'); return; }
+  upsertBal(v,$('balDate').value||todayISO()); $('balIn').value=''; save(); drawHome(); toast('Balance saved ✓');
+}
+function addBal(){
+  const v=readAmt(); if(v===null||v===0){ toast('Enter an amount first'); return; }
+  const d=$('balDate').value||todayISO();
+  const same=S.bal.find(x=>x.d===d);
+  upsertBal((same?same.v:latestNet())+v,d); $('balIn').value=''; save(); drawHome(); toast((v>0?'Added ':'Withdrew ')+peso(Math.abs(v))+' ✓');
+}
+function delBal(i){ S.bal.splice(i,1); save(); drawHome(); }
+function focusBal(){ $('balCard').scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>$('balIn').focus(),450); }
+$('balDate').value=todayISO();
+const shortD=d=>new Date(d+'T00:00:00').toLocaleDateString('en-PH',{month:'short',day:'numeric'});
+const sgn=v=>(v>0?'+':'')+peso(v);
+
+function drawHome(){
+  const net=latestNet(), goal=S.goal||100000, vals=S.bal.map(b=>b.v);
+  $('hNet').textContent=peso(net);
+  $('hGoalTxt').textContent='Goal '+peso(goal);
+  $('hBar').style.width=Math.max(0,Math.min(100,net/goal*100))+'%';
+  $('hStart').textContent='Start '+peso(vals.length?vals[0]:0);
+  $('hDelta').textContent = vals.length>=2 ? sgn(net-vals[0])+' since '+shortD(S.bal[0].d) : (vals.length? 'Logged '+shortD(S.bal[0].d) : 'Tap the amount to set your balance');
+  const pts = vals.length>=2 ? vals : [0,net];
+  drawLines($('spark'),[{data:pts,color:'#fff',w:3,fill:'rgba(255,255,255,.35)',glow:'rgba(255,255,255,.6)'}],{min:vals.length>=2?Math.min(...pts):Math.min(0,...pts)});
+  drawProgress();
+}
+function drawProgress(){
+  const b=S.bal, goal=S.goal||100000, now=latestNet(), first=b.length?b[0].v:0, ch=now-first;
+  $('pgStart').textContent=peso(first); $('pgNow').textContent=peso(now);
+  $('pgChg').textContent=sgn(ch); $('pgChg').className=ch>=0?'g':'r';
+  $('pgPct').textContent=goal>0?Math.max(0,now/goal*100).toFixed(1)+'%':'—';
+  const c=$('balChart');
+  if(!b.length){ const q=setupCanvas(c); q.x.fillStyle='#8aa396'; q.x.font='13px sans-serif'; q.x.textAlign='center'; q.x.fillText('Save your balance to see progress',q.w/2,q.h/2); }
+  else drawLines(c,[{data:b.map(x=>x.v),color:'#22e06b',fill:'rgba(34,224,107,.35)',glow:'rgba(34,224,107,.7)'}],{axis:true,xlabels:b.length>1?[[0,shortD(b[0].d)],[b.length-1,shortD(b[b.length-1].d)]]:[]});
+  let pace='Log your balance at least twice, on different days, to see your pace.';
+  if(now>=goal && b.length) pace='🎉 You\'ve reached your goal of '+peso(goal)+'. Set a bigger one!';
+  else if(b.length>=2){
+    const days=(new Date(b[b.length-1].d)-new Date(b[0].d))/86400000;
+    if(days>=1){
+      const pm=(now-first)/days*30.4;
+      pace = pm>0 ? 'Your pace so far: about '+peso(pm)+' per month. At this pace you\'d reach '+peso(goal)+' in roughly '+((goal-now)/pm>=1200?'100+ years':(((goal-now)/pm)<12?((goal-now)/pm).toFixed(1)+' months':(((goal-now)/pm)/12).toFixed(1)+' years'))+'. This is an estimate — it changes as your income and savings grow.'
+                 : 'Your balance isn\'t growing yet. Look at the Save & invest formula below to find your surplus.';
+    }
+  }
+  $('pgPace').textContent=pace;
+  $('balHist').innerHTML = b.length ? b.map((x,i)=>({x,i})).reverse().slice(0,10).map(({x,i})=>{
+    const prev=b[i-1], d=prev?x.v-prev.v:null;
+    return '<div class="hist"><div><b style="font-family:inherit">'+shortD(x.d)+'</b><br><small style="color:'+(d===null?'var(--mut)':(d>=0?'var(--g)':'var(--bad)')+';')+'">'+(d===null?'First entry':sgn(d))+'</small></div><div style="text-align:right"><b>'+peso(x.v)+'</b><br><small style="color:var(--mut);cursor:pointer" onclick="delBal('+i+')">remove</small></div></div>';
+  }).join('') : '';
+}
+
+/* save & invest planner */
+const SPIDS=['spFreq','spInc','spNeed','spWant','spLrn','spEF','spMon','spSplit','spRate','spYrs','spDep','spStart','spChk'];
+if(S.plan) SPIDS.forEach(id=>{ if(S.plan[id]!==undefined) $(id).value=S.plan[id]; });
+let PLAN={save:0,inv:0}, SUGG=50;
+function calcPlan(){
+  const f=$('spFreq').value==='w'?52/12:1;
+  const inc=num('spInc'), need=num('spNeed'), want=num('spWant'), lrn=num('spLrn'), ef=num('spEF'), mon=+$('spMon').value;
+  const split=+$('spSplit').value, r=+$('spRate').value/100, y=+$('spYrs').value;
+  $('spSv').textContent=split+'% save · '+(100-split)+'% invest';
+  $('spRv').textContent=(r*100).toFixed(1).replace('.0','')+'%'; $('spYv').textContent=y;
+  S.plan={}; SPIDS.forEach(id=>S.plan[id]=$(id).value); save();
+  const wk=$('spFreq').value==='w', dep=num('spDep');
+  $('spDepL').textContent='Deposit per '+(wk?'week':'month')+' (₱)';
+  if(dep>0){
+    const FVd=fv(0,dep*f,r,y), put=dep*f*12*y;
+    $('spDepOut').innerHTML='<div class="grid2"><div class="stat"><small>Each '+(wk?'week':'month')+' deposit</small><b>'+peso(dep)+'</b></div><div class="stat"><small>Total deposited</small><b>'+peso(put)+'</b></div><div class="stat"><small>Grows to in '+y+' years</small><b class="g">'+peso(FVd)+'</b></div><div class="stat"><small>Compound gain</small><b class="g">'+peso(FVd-put)+'</b></div></div>';
+  } else $('spDepOut').innerHTML='';
+  calcStart();
+  const target=need*f*mon, gap=Math.max(0,target-ef);
+  SUGG = (need>0&&gap>0)?100:50;
+  $('spSugg').textContent='Suggested: '+SUGG+'% save · '+(100-SUGG)+'% invest'+(SUGG===100?' (emergency fund first)':'');
+  if(inc<=0){ $('spOut').innerHTML='<small style="color:var(--mut)">Enter your income per period to see your split.</small>'; PLAN={save:0,inv:0}; return; }
+  const sur=inc-need-want-lrn, pos=Math.max(0,sur), sv=pos*split/100, iv=pos-sv;
+  PLAN={save:sv,inv:iv};
+  let h='<div class="formula">'+peso(inc)+' − '+peso(need)+' − '+peso(want)+' − '+peso(lrn)+' = '+peso(sur)+'</div>';
+  h+='<div class="grid2"><div class="stat"><small>Surplus per period</small><b class="'+(sur>=0?'g':'r')+'">'+peso(sur)+'</b></div><div class="stat"><small>Learning</small><b>'+peso(lrn)+'</b></div><div class="stat"><small>Save</small><b>'+peso(sv)+'</b></div><div class="stat"><small>Invest</small><b class="g">'+peso(iv)+'</b></div></div>';
+  if(sur<=0){
+    h+='<div class="note bad">'+(sur<0?'Your spending is more than your income.':'Nothing is left over.')+' Trim wants or raise income first — and never cut food or medicine to save.</div>';
+  } else {
+    if(need>0){
+      if(gap<=0) h+='<div class="note">✓ Emergency fund is full: '+peso(target)+' covers '+mon+' month'+(mon>1?'s':'')+' of needs.</div>';
+      else { const sm=sv*f, mo=sm>0?gap/sm:Infinity; h+='<div class="note warn">Emergency fund goal: '+peso(target)+'. You still need '+peso(gap)+(isFinite(mo)?' — about '+mo.toFixed(1)+' months at this save rate.':'. Put some of your surplus into Save to fill it.')+'</div>'; }
+    }
+    const mi=iv*f, ms=sv*f, FV=fv(0,mi,r,y), saved=ms*12*y;
+    h+='<div class="grid2" style="margin-top:10px"><div class="stat"><small>Invested grows to</small><b class="g">'+peso(FV)+'</b></div><div class="stat"><small>Saved (no growth)</small><b>'+peso(saved)+'</b></div></div>';
+    h+='<div class="stat" style="margin-top:10px"><small>Combined in '+y+' years</small><b class="g">'+peso(FV+saved)+'</b></div>';
+    h+='<div class="note warn">Illustration only: constant '+(r*100).toFixed(1).replace('.0','')+'% return, no fees or taxes. Real returns fluctuate and can be negative. Invest only after essentials and your emergency fund are safe.</div>';
+    h+='<button style="margin-top:12px" onclick="logPlan()">Add this period\'s save + invest to my balance</button>';
+  }
+  $('spOut').innerHTML=h;
+}
+
+/* start date, savings & timeline */
+function isoD(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function pD(iso){ const a=iso.split('-'); return new Date(+a[0],+a[1]-1,+a[2],12); }
+function addM(d,n,day){ const t=new Date(d.getFullYear(),d.getMonth()+n,1,12), last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate(); t.setDate(Math.min(day,last)); return t; }
+function fmtD(d){ return d.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}); }
+function depDates(start,end,wk){
+  const out=[], day=start.getDate(); let i=0, d=new Date(start);
+  while(d<=end && i<2000){ out.push(new Date(d)); i++; d = wk? new Date(start.getFullYear(),start.getMonth(),start.getDate()+7*i,12) : addM(start,i,day); }
+  return out;
+}
+function valAt(dates,amt,r,end){ let sv=0,fvv=0; dates.forEach(d=>{ sv+=amt; fvv+=amt*Math.pow(1+r,(end-d)/86400000/365); }); return {saved:sv,grown:fvv,n:dates.length}; }
+function calcStart(){
+  const box=$('spStartOut'); if(!box) return;
+  const t=new Date(); t.setHours(12,0,0,0);
+  if(!$('spStart').value) $('spStart').value=isoD(t);
+  if(!$('spChk').value) $('spChk').value=isoD(new Date(t.getFullYear()+1,t.getMonth(),t.getDate(),12));
+  const wk=$('spFreq').value==='w', dep=num('spDep'), r=+$('spRate').value/100;
+  const st=pD($('spStart').value), ck=pD($('spChk').value);
+  if(dep<=0){ box.innerHTML='<small style="color:var(--mut)">Enter your deposit amount to see your savings timeline.</small>'; return; }
+  const perW = wk?dep:dep*12/52, perM = wk?dep*52/12:dep, perY = wk?dep*52:dep*12;
+  const rp=(r*100).toFixed(1).replace('.0','')+'%';
+  const row=(d,a,b,la,lb)=>'<div class="sp-row"><div class="d">'+d+'</div><div class="v"><div>'+(la||'Saved')+'<b>'+peso(a)+'</b></div><div>'+(lb||'Invested')+'<b class="g">'+peso(b)+'</b></div></div></div>';
+  let h='<div class="sp-h" style="margin-top:4px">Your savings</div><div class="sp-list">';
+  h+='<div class="sp-row"><div class="v"><div>Per week<b>'+peso(perW)+'</b></div><div>Per month<b>'+peso(perM)+'</b></div></div></div>';
+  h+='<div class="sp-big"><small>Per year</small><b>'+peso(perY)+'</b></div></div>';
+  const y1=new Date(st.getFullYear()+1,st.getMonth(),st.getDate(),12);
+  const ds=depDates(st,new Date(y1.getTime()-86400000),wk), v1=valAt(ds,dep,r,y1);
+  h+='<div class="sp-h">After 1 year</div><small style="color:var(--mut)">Start '+fmtD(st)+' → '+fmtD(y1)+'</small>';
+  h+='<div class="sp-list">'+row('Saving vs investing at '+rp,v1.saved,v1.grown,'Just saving','If invested')+'</div>';
+  h+='<div class="sp-big"><small>Extra gain from investing</small><b>+'+peso(v1.grown-v1.saved)+'</b></div>';
+  if(ck>=st){
+    const dc=depDates(st,ck,wk), vc=valAt(dc,dep,r,ck);
+    h+='<div class="sp-h">On '+fmtD(ck)+'</div><div class="sp-list">'+row(vc.n+' deposits made',vc.saved,vc.grown,'Saved','Invested')+'</div>';
+  } else h+='<div class="note warn" style="margin-top:10px">Check date is before your start date.</div>';
+  h+='<div class="sp-h">Month by month</div><div class="sp-list sp-scroll">';
+  for(let m=1;m<=12;m++){
+    const e=addM(st,m,st.getDate()), vm=valAt(depDates(st,new Date(e.getTime()-86400000),wk),dep,r,e);
+    h+=row('Month '+m+' · '+fmtD(e),vm.saved,vm.grown);
+  }
+  h+='</div>';
+  h+='<div class="sp-h">If I start on…</div><small style="color:var(--mut)">Measured on '+fmtD(ck)+'</small><div class="sp-list sp-scroll">';
+  const opts=[new Date(t)]; for(let k=1;k<=6;k++) opts.push(new Date(t.getFullYear(),t.getMonth()+k,1,12));
+  opts.forEach((o,i)=>{
+    const vo=o<=ck?valAt(depDates(o,ck,wk),dep,r,ck):{saved:0,grown:0};
+    h+=row((i===0?'Today · ':'')+fmtD(o),vo.saved,vo.grown);
+  });
+  h+='</div><div class="note warn" style="margin-top:12px">Illustration only: assumes the return slider above, no fees or taxes. Real returns fluctuate and can be negative.</div>';
+  box.innerHTML=h;
+}
+function useSugg(){ $('spSplit').value=SUGG; calcPlan(); }
+function logPlan(){
+  const amt=PLAN.save+PLAN.inv; if(amt<=0){ toast('Nothing to add yet'); return; }
+  const d=todayISO(), same=S.bal.find(x=>x.d===d);
+  upsertBal((same?same.v:latestNet())+amt,d); save(); drawHome(); toast('Added '+peso(amt)+' to your balance ✓');
+}
+function planFromBudget(){
+  const inc=num('income'); if(!inc){ toast('Set your income in the Budget tab first'); return; }
+  $('spFreq').value='m'; $('spInc').value=inc;
+  $('spNeed').value=Math.round(inc*S.alloc.needs/100);
+  $('spWant').value=Math.round(inc*S.alloc.wants/100);
+  $('spLrn').value=Math.round(inc*S.alloc.learn/100);
+  calcPlan(); toast('Filled from Budget');
+}
+SPIDS.forEach(id=>{ $(id).oninput=calcPlan; $(id).onchange=calcPlan; });
+calcPlan(); drawHome();
+
+window.addEventListener('resize',()=>{drawHome();drawNet();calcInvest();});
+window.addEventListener('load',()=>{drawHome();});
+</script>
+<script>
+/* Offline PWA support. Requires HTTPS or localhost. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.warn('Wealth OS offline setup could not start:', err);
+    });
+  });
+}
+</script>
+</body>
+</html>
